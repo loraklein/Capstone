@@ -1,13 +1,20 @@
 import { Pool } from 'pg';
+import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
 
 dotenv.config();
 
-// Database connection configuration
+// Supabase configuration
+export const supabase = createClient(
+  process.env.SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
+
+// Database connection configuration (for direct PostgreSQL access if needed)
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
-  database: process.env.DB_NAME || 'docuscan_db',
+  database: process.env.DB_NAME || 'postgres',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'password',
   // Connection pool settings
@@ -22,9 +29,18 @@ export const pool = new Pool(dbConfig);
 // Test database connection
 export const testConnection = async (): Promise<boolean> => {
   try {
-    const client = await pool.connect();
-    console.log('✅ Database connected successfully');
-    client.release();
+    // Test Supabase connection first
+    const { data, error } = await supabase
+      .from('users')
+      .select('count')
+      .limit(1);
+    
+    if (error) {
+      console.error('❌ Supabase connection failed:', error);
+      return false;
+    }
+    
+    console.log('✅ Supabase connected successfully');
     return true;
   } catch (error) {
     console.error('❌ Database connection failed:', error);

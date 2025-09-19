@@ -11,6 +11,13 @@ dotenv.config();
 // Import database connection
 import { testConnection } from './config/database';
 
+// Import routes
+import projectRoutes from './routes/projectRoutes';
+import pageRoutes from './routes/pageRoutes';
+
+// Import middleware
+import { authenticateUser } from './middleware/auth';
+
 const app = express();
 const PORT = process.env.PORT || 3001;
 
@@ -38,13 +45,12 @@ app.get('/health', (req, res) => {
   });
 });
 
-// API routes will go here
-// app.use('/api/auth', authRoutes);
-// app.use('/api/projects', projectRoutes);
-// app.use('/api/pages', pageRoutes);
+// API routes
+app.use('/api/projects', authenticateUser, projectRoutes);
+app.use('/api/pages', authenticateUser, pageRoutes);
 
 // 404 handler
-app.use('*', (req, res) => {
+app.use((req, res) => {
   res.status(404).json({ 
     error: 'Route not found',
     path: req.originalUrl 
