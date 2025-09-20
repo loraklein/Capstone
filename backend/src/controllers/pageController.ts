@@ -47,6 +47,8 @@ export const addPage = async (req: Request, res: Response) => {
     const { photoUrl, rotation = 0 } = req.body;
     const userId = req.user?.id;
 
+    console.log('Adding page:', { projectId, photoUrl, rotation, userId });
+
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
@@ -59,12 +61,22 @@ export const addPage = async (req: Request, res: Response) => {
       .eq('user_id', userId)
       .single();
 
-    if (projectError || !project) {
+    if (projectError) {
+      console.error('Project verification error:', projectError);
+      return res.status(404).json({ error: 'Project not found', details: projectError.message });
+    }
+
+    if (!project) {
+      console.error('Project not found for user:', { projectId, userId });
       return res.status(404).json({ error: 'Project not found' });
     }
 
+    console.log('Project found:', project);
+
     // Get the next page number
     const pageNumber = project.page_count + 1;
+
+    console.log('Creating page with number:', pageNumber);
 
     // Insert the new page
     const { data, error } = await supabase
@@ -82,8 +94,10 @@ export const addPage = async (req: Request, res: Response) => {
 
     if (error) {
       console.error('Error adding page:', error);
-      return res.status(500).json({ error: 'Failed to add page' });
+      return res.status(500).json({ error: 'Failed to add page', details: error.message });
     }
+
+    console.log('Page created successfully:', data);
 
     // Update the project's page count
     const { error: updateError } = await supabase
@@ -99,7 +113,10 @@ export const addPage = async (req: Request, res: Response) => {
     res.status(201).json(data);
   } catch (error) {
     console.error('Error in addPage:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ 
+      error: 'Internal server error', 
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
   }
 };
 

@@ -2,10 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 
 // Temporary auth middleware - we'll implement proper Supabase auth later
 export const authenticateUser = (req: Request, res: Response, next: NextFunction) => {
-  // For now, we'll use a temporary user ID for testing
+  // For now, we'll use the user ID from the request header or default to a test user
   // In production, this would verify JWT tokens or Supabase session
+  const userId = req.headers['x-user-id'] as string || '550e8400-e29b-41d4-a716-446655440000';
+  
   req.user = {
-    id: 'temp-user-id' // This will be replaced with real auth later
+    id: userId
   };
   
   next();
