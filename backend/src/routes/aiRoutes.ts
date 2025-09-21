@@ -4,7 +4,8 @@ import {
   getPageText,
   getAvailableAIProviders,
   batchProcessProject,
-  testAIProcessing
+  testAIProcessing,
+  uploadTestImage
 } from '../controllers/aiController';
 
 const router = Router();
@@ -15,5 +16,6 @@ router.get('/pages/:pageId/text', getPageText);
 router.get('/providers', getAvailableAIProviders);
 router.post('/projects/:projectId/batch-process', batchProcessProject);
 router.post('/test', testAIProcessing); // No auth required for testing
+router.post('/upload-test', uploadTestImage); // No auth required for testing
 
 export default router;

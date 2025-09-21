@@ -107,6 +107,36 @@ export const getAvailableAIProviders = async (req: Request, res: Response) => {
   }
 };
 
+export const uploadTestImage = async (req: Request, res: Response) => {
+  try {
+    const { imageBase64, fileName } = req.body;
+
+    if (!imageBase64) {
+      return res.status(400).json({ error: 'Base64 image is required' });
+    }
+
+    // Convert base64 to buffer
+    const imageBuffer = Buffer.from(imageBase64, 'base64');
+    
+    // Upload to Supabase Storage (use test user ID)
+    const { storageService } = await import('../services/storageService');
+    const testUserId = '39fcd9b8-7c1b-41b1-8980-931a616ead82';
+    const imageUrl = await storageService.uploadImage(imageBuffer, fileName || 'test-image.jpg', testUserId);
+
+    res.json({
+      message: 'Image uploaded successfully',
+      imageUrl,
+      fileName: fileName || 'test-image.jpg'
+    });
+  } catch (error) {
+    console.error('Error uploading test image:', error);
+    res.status(500).json({ 
+      error: 'Failed to upload image',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    });
+  }
+};
+
 export const testAIProcessing = async (req: Request, res: Response) => {
   try {
     const { imageBase64, testImage } = req.body;

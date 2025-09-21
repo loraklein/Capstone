@@ -122,7 +122,7 @@ export class AIService {
   constructor() {
     // Register providers with your actual configuration
     const ollamaHost = process.env.OLLAMA_HOST || 'http://golem:11434';
-    const ollamaModel = 'llava:latest'; // Force use of vision model
+    const ollamaModel = 'llama3.2-vision:90b'; // Best accuracy for handwritten text
     
     this.providers.set('ollama', new OllamaProvider(ollamaHost, ollamaModel));
     this.providers.set('google_vision', new GoogleVisionProvider());
