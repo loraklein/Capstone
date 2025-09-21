@@ -3,7 +3,7 @@ import { supabase } from '../config/database';
 
 export const createProject = async (req: Request, res: Response) => {
   try {
-    const { name, description, lockOrientation } = req.body;
+    const { title, description, lockOrientation } = req.body;
     const userId = req.user?.id; // Assuming auth middleware sets req.user
 
     if (!userId) {
@@ -15,7 +15,7 @@ export const createProject = async (req: Request, res: Response) => {
       .insert([
         {
           user_id: userId,
-          name,
+          name: title, // Map title to name field in database
           description,
           lock_orientation: lockOrientation || false,
           page_count: 0
@@ -29,7 +29,18 @@ export const createProject = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to create project' });
     }
 
-    res.status(201).json(data);
+    // Transform the response to match frontend expectations
+    const transformedData = {
+      id: data.id,
+      title: data.name, // Map name back to title for frontend
+      name: data.name,
+      description: data.description,
+      page_count: data.page_count,
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+
+    res.status(201).json(transformedData);
   } catch (error) {
     console.error('Error in createProject:', error);
     res.status(500).json({ error: 'Internal server error' });
@@ -55,7 +66,18 @@ export const getProjects = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to fetch projects' });
     }
 
-    res.json(data);
+    // Transform the response to match frontend expectations
+    const transformedData = data.map((project: any) => ({
+      id: project.id,
+      title: project.name, // Map name to title for frontend
+      name: project.name,
+      description: project.description,
+      page_count: project.page_count,
+      created_at: project.created_at,
+      updated_at: project.updated_at,
+    }));
+
+    res.json(transformedData);
   } catch (error) {
     console.error('Error in getProjects:', error);
     res.status(500).json({ error: 'Internal server error' });

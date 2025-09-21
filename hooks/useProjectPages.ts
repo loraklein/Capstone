@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { CapturedPage } from '../types';
 import { projectService } from '../utils/projectService';
+import { pageService } from '../utils/pageService';
 
 export function useProjectPages(projectId: string) {
   const [capturedPages, setCapturedPages] = useState<CapturedPage[]>([]);
@@ -12,21 +13,8 @@ export function useProjectPages(projectId: string) {
   const loadProjectPages = async () => {
     try {
       setIsLoading(true);
-      const storedPages = await AsyncStorage.getItem(`project_pages_${projectId}`);
-      if (storedPages) {
-        const pages = JSON.parse(storedPages);
-        const pagesWithDates = pages.map((page: any) => ({
-          ...page,
-          timestamp: new Date(page.timestamp)
-        }));
-        
-        const pagesWithCorrectNumbers = pagesWithDates.map((page: any, index: number) => ({
-          ...page,
-          pageNumber: index + 1
-        }));
-        
-        setCapturedPages(pagesWithCorrectNumbers);
-      }
+      const pages = await pageService.getProjectPages(projectId);
+      setCapturedPages(pages);
     } catch (error) {
       console.log('Error loading pages:', error);
     } finally {
@@ -61,53 +49,33 @@ export function useProjectPages(projectId: string) {
   };
 
   const addPage = async (photoUri: string) => {
-    const newPage: CapturedPage = {
-      id: Date.now().toString(),
-      pageNumber: capturedPages.length + 1,
-      timestamp: new Date(),
-      photoUri: photoUri,
-      rotation: 0,
-    };
-    
-    const updatedPages = [...capturedPages, newPage];
-    setCapturedPages(updatedPages);
-    await saveProjectPages(updatedPages);
-    await updateProjectPageCount(updatedPages.length);
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    return updatedPages.length;
+    try {
+      const newPage = await pageService.addPage(projectId, { photoUri });
+      
+      const updatedPages = [...capturedPages, newPage];
+      setCapturedPages(updatedPages);
+      
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      return updatedPages.length;
+    } catch (error) {
+      console.log('Error adding page:', error);
+      throw error;
+    }
   };
 
   const deletePage = async (pageId: string) => {
-    const pageToRemove = capturedPages.find(page => page.id === pageId);
-    
-    // Delete the actual image file from device storage
-    if (pageToRemove?.photoUri && pageToRemove.photoUri.startsWith('file://')) {
-      try {
-        // Check if file exists before trying to delete it
-        const fileInfo = await FileSystem.getInfoAsync(pageToRemove.photoUri);
-        if (fileInfo.exists) {
-          await FileSystem.deleteAsync(pageToRemove.photoUri);
-        }
-      } catch (error) {
-        console.log('Error deleting image file:', error);
-      }
+    try {
+      await pageService.deletePage(pageId, projectId);
+      
+      const updatedPages = capturedPages.filter(page => page.id !== pageId);
+      setCapturedPages(updatedPages);
+      
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      return updatedPages.length;
+    } catch (error) {
+      console.log('Error deleting page:', error);
+      throw error;
     }
-    
-    const updatedPages = capturedPages.filter(page => page.id !== pageId);
-    
-    // Update page numbers to reflect new order
-    const renumberedPages = updatedPages.map((page, index) => ({
-      ...page,
-      pageNumber: index + 1
-    }));
-    
-    setCapturedPages(renumberedPages);
-    await saveProjectPages(renumberedPages);
-    await updateProjectPageCount(renumberedPages.length);
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    return renumberedPages.length;
   };
 
   const reorderPagesWithArray = async (reorderedPages: CapturedPage[]) => {
@@ -130,6 +98,44 @@ export function useProjectPages(projectId: string) {
     loadProjectPages();
   }, [projectId]);
 
+  // AI processing functions
+  const processPageWithAI = async (pageId: string, provider: string = 'ollama') => {
+    try {
+      const result = await pageService.processPageWithAI(pageId, provider);
+      
+      // Reload pages to get updated AI data
+      await loadProjectPages();
+      
+      return result;
+    } catch (error) {
+      console.log('Error processing page with AI:', error);
+      throw error;
+    }
+  };
+
+  const getPageText = async (pageId: string) => {
+    try {
+      return await pageService.getPageText(pageId);
+    } catch (error) {
+      console.log('Error getting page text:', error);
+      throw error;
+    }
+  };
+
+  const batchProcessProject = async (provider: string = 'ollama') => {
+    try {
+      const result = await pageService.batchProcessProject(projectId, provider);
+      
+      // Reload pages to get updated AI data
+      await loadProjectPages();
+      
+      return result;
+    } catch (error) {
+      console.log('Error batch processing project:', error);
+      throw error;
+    }
+  };
+
   return {
     capturedPages,
     isLoading,
@@ -138,5 +144,9 @@ export function useProjectPages(projectId: string) {
     updatePageRotation,
     reorderPagesWithArray,
     reloadPages: loadProjectPages,
+    // AI functions
+    processPageWithAI,
+    getPageText,
+    batchProcessProject,
   };
 } 

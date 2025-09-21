@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import React from 'react';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { formatDate } from '../utils/dateUtils';
 
@@ -33,14 +34,14 @@ export default function RecentPageCard({ page, onPress }: RecentPageCardProps) {
         <Pressable onPress={handlePress} style={[styles.cardContent, { borderBottomColor: theme.divider }]}>
           {page.photoUri && (
             <View style={styles.thumbnailContainer}>
-              <Image
-                source={{ uri: page.photoUri }}
-                style={[
-                  styles.thumbnail,
-                  { transform: [{ rotate: `${page.rotation || 0}deg` }] }
-                ]}
-                resizeMode="cover"
-              />
+                    <Image
+                      source={{ uri: page.photoUri }}
+                      style={[
+                        styles.thumbnail,
+                        { transform: [{ rotate: `${page.rotation || 0}deg` }] }
+                      ]}
+                      contentFit="cover"
+                    />
             </View>
           )}
           

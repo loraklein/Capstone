@@ -1,6 +1,7 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import React from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { CapturedPage } from '../types';
 
@@ -16,14 +17,14 @@ export default function PagePhoto({ page, height = 120 }: PagePhotoProps) {
     <View style={styles.pageContent}>
       {page.photoUri ? (
         <View style={[styles.photoContainer, { height }]}>
-          <Image
-            source={{ uri: page.photoUri }}
-            style={[
-              styles.photoThumbnail,
-              { transform: [{ rotate: `${page.rotation || 0}deg` }] }
-            ]}
-            resizeMode="cover"
-          />
+                <Image
+                  source={{ uri: page.photoUri }}
+                  style={[
+                    styles.photoThumbnail,
+                    { transform: [{ rotate: `${page.rotation || 0}deg` }] }
+                  ]}
+                  contentFit="cover"
+                />
           <View style={styles.photoOverlay}>
             <MaterialIcons name="photo" size={24} color="white" />
           </View>
