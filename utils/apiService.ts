@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Backend API configuration
-const API_BASE_URL = 'http://192.168.0.206:3001/api';
+const API_BASE_URL = 'http://144.38.182.71:3001/api';
 const TEST_USER_ID = '39fcd9b8-7c1b-41b1-8980-931a616ead82'; // Temporary test user
 
 // API service for backend communication

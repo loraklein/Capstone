@@ -37,7 +37,8 @@ export class OllamaProvider implements AIProvider {
         host: this.host,
         model: this.model,
         imageBase64Length: imageBase64.length,
-        imageBase64Preview: imageBase64.substring(0, 50) + '...'
+        imageBase64Preview: imageBase64.substring(0, 50) + '...',
+        imageUrl: imageUrl
       });
 
       // Try the chat API endpoint which is better for vision models
@@ -48,13 +49,13 @@ export class OllamaProvider implements AIProvider {
         },
         body: JSON.stringify({
           model: this.model,
-          messages: [
-            {
-              role: 'user',
-              content: 'please transcribe the text in this image from handwritten cursive to digital text. Please respond in JSON only--no formatting: { "text": "" }',
-              images: [imageBase64]
-            }
-          ],
+                 messages: [
+                   {
+                     role: 'user',
+                     content: 'Your task is to transcribe text from this image. Do NOT describe the image or objects in it. Only transcribe the actual text content you can read. Look for any handwritten notes, typed text, printed text, or other written content. If you cannot read any text clearly, respond with "No readable text found". If you can read some text, transcribe it exactly as written. Use "[unclear]" only for individual words you cannot make out. Do not add descriptions, interpretations, or analysis. Only provide the text content. Respond in JSON format: { "text": "transcribed text here" }',
+                     images: [imageBase64]
+                   }
+                 ],
           stream: false
         })
       });
@@ -66,24 +67,105 @@ export class OllamaProvider implements AIProvider {
       const result = await response.json();
       const processingTime = Date.now() - startTime;
 
+      // Debug: Log the full response from Ollama
+      console.log('Ollama response:', {
+        fullResponse: result,
+        messageContent: result.message?.content,
+        response: result.response
+      });
+
       // Parse the response text to extract JSON if needed
       let extractedText = result.message?.content || result.response || '';
-      
+
+      console.log('Raw extracted text before parsing:', extractedText);
+
       // Try to parse JSON response
       try {
         const jsonMatch = extractedText.match(/\{[\s\S]*\}/);
         if (jsonMatch) {
-          const jsonResponse = JSON.parse(jsonMatch[0]);
+          let jsonText = jsonMatch[0];
+          
+          // Try to fix common JSON issues
+          // Fix missing comma between quoted strings
+          jsonText = jsonText.replace(/"\s*"\s*([^,}])/g, '", "$1');
+          
+          const jsonResponse = JSON.parse(jsonText);
           extractedText = jsonResponse.text || extractedText;
+          console.log('Parsed JSON response:', jsonResponse);
         }
       } catch (parseError) {
-        // If JSON parsing fails, use the raw response
-        console.log('Could not parse JSON response, using raw text:', parseError);
+        console.log('Could not parse JSON response, trying to extract text manually:', parseError);
+        
+        // Try to extract text content manually if JSON parsing fails
+        const textMatch = extractedText.match(/"text":\s*"([^"]*(?:\\.[^"]*)*)"/);
+        if (textMatch) {
+          extractedText = textMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
+          console.log('Manually extracted text:', extractedText);
+        } else {
+          console.log('Could not extract text manually, using raw response');
+        }
       }
+
+      console.log('Final extracted text:', extractedText);
+
+      // Check if the response is a description rather than transcription
+      const isDescription = extractedText.toLowerCase().includes('the image shows') || 
+                           extractedText.toLowerCase().includes('the image contains') ||
+                           extractedText.toLowerCase().includes('in the image') ||
+                           extractedText.toLowerCase().includes('this image') ||
+                           extractedText.toLowerCase().includes('overall, the image');
+
+      if (isDescription) {
+        console.log('Detected description response instead of transcription, trying alternative prompt');
+        
+        // Try a more direct approach
+        try {
+          const alternativeResponse = await fetch(`${this.host}/api/chat`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              model: this.model,
+              messages: [
+                {
+                  role: 'user',
+                  content: 'Read the text in this image and type it out exactly. Only output the text content, nothing else.',
+                  images: [imageBase64]
+                }
+              ],
+              stream: false
+            })
+          });
+
+          if (alternativeResponse.ok) {
+            const altResult = await alternativeResponse.json();
+            const altText = altResult.message?.content || altResult.response || '';
+            
+            if (altText && !altText.toLowerCase().includes('the image')) {
+              console.log('Alternative prompt successful:', altText);
+              extractedText = altText;
+            } else {
+              console.log('Alternative prompt also failed, using fallback message');
+              extractedText = 'No readable text found - AI provided image description instead of text transcription';
+            }
+          } else {
+            console.log('Alternative prompt request failed, using fallback message');
+            extractedText = 'No readable text found - AI provided image description instead of text transcription';
+          }
+        } catch (altError) {
+          console.log('Alternative prompt error:', altError);
+          extractedText = 'No readable text found - AI provided image description instead of text transcription';
+        }
+      }
+
+      // Check final result to determine confidence
+      const finalIsDescription = extractedText.toLowerCase().includes('no readable text found') || 
+                                extractedText.toLowerCase().includes('ai provided image description');
 
       return {
         text: extractedText,
-        confidence: 0.85, // Ollama doesn't provide confidence scores, so we estimate
+        confidence: finalIsDescription ? 0.1 : 0.85,
         provider: this.name,
         processingTime
       };
@@ -95,10 +177,23 @@ export class OllamaProvider implements AIProvider {
 
   private async convertImageToBase64(imageUrl: string): Promise<string> {
     try {
+      console.log('Converting image to base64:', imageUrl);
+      
       // Use the storage service to get image buffer
       const imageBuffer = await storageService.getImageBuffer(imageUrl);
-      return imageBuffer.toString('base64');
+      
+      console.log('Image buffer details:', {
+        bufferSize: imageBuffer.length,
+        bufferType: typeof imageBuffer,
+        firstBytes: imageBuffer.slice(0, 10)
+      });
+      
+      const base64 = imageBuffer.toString('base64');
+      console.log('Base64 conversion successful, length:', base64.length);
+      
+      return base64;
     } catch (error) {
+      console.error('Error converting image to base64:', error);
       throw new Error(`Failed to convert image to base64: ${error}`);
     }
   }

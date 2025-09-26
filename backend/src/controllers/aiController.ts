@@ -198,7 +198,7 @@ export const batchProcessProject = async (req: Request, res: Response) => {
       .from('pages')
       .select('*')
       .eq('project_id', projectId)
-      .neq('processing_status', 'completed')
+      .not('processing_status', 'eq', 'completed')
       .not('photo_url', 'is', null);
 
     if (pagesError) {
@@ -213,12 +213,23 @@ export const batchProcessProject = async (req: Request, res: Response) => {
       });
     }
 
+    console.log(`Starting batch processing for ${pages.length} pages in project ${projectId}`);
+
     // Process pages in parallel (be careful with rate limits)
-    const processingPromises = pages.map(page => 
-      aiService.processPage(page.id, page.photo_url, provider)
-    );
+    const processingPromises = pages.map(async (page, index) => {
+      try {
+        console.log(`Processing page ${index + 1}/${pages.length}: ${page.id}`);
+        await aiService.processPage(page.id, page.photo_url, provider);
+        console.log(`Successfully processed page ${page.id}`);
+      } catch (error) {
+        console.error(`Error processing page ${page.id}:`, error);
+        throw error;
+      }
+    });
 
     await Promise.all(processingPromises);
+
+    console.log(`Batch processing completed for project ${projectId}`);
 
     res.json({
       message: 'Project processed successfully',

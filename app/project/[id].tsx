@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -38,7 +39,7 @@ export default function ProjectDetailScreen() {
   const description = params.description as string || '';
   const scrollToPage = params.scrollToPage as string;
 
-  const { capturedPages, addPage, deletePage, reorderPagesWithArray, updatePageRotation } = useProjectPages(projectId);
+  const { capturedPages, addPage, deletePage, reorderPagesWithArray, updatePageRotation, processPageWithAI, batchProcessProject } = useProjectPages(projectId);
   const { refreshProjects } = useProjects();
   const { isGenerating, generatePdf } = usePdfGeneration();
   const { showCamera, handleAddPage, handleCameraCapture, handleCameraClose } = useCameraManagement({ addPage });
@@ -46,6 +47,24 @@ export default function ProjectDetailScreen() {
   const { showDeleteModal, handleDeletePage, confirmDelete, cancelDelete } = useDeleteConfirmation({ deletePage, refreshProjects });
   const { isReorderMode, handleToggleReorderMode } = useReorderMode();
   const { hasPagesWithPhotos, handleExportPdf } = usePdfExport({ projectName, description, capturedPages, generatePdf });
+  const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+
+  const handleBatchProcess = async () => {
+    if (isBatchProcessing) return;
+    
+    setIsBatchProcessing(true);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      console.log('Starting batch processing for project:', projectId);
+      await batchProcessProject();
+      console.log('Batch processing completed successfully');
+    } catch (error) {
+      console.log('Error batch processing project:', error);
+      console.log('Error details:', JSON.stringify(error, null, 2));
+    } finally {
+      setIsBatchProcessing(false);
+    }
+  };
   useCameraOrientation(showCamera);
 
   const flatListRef = useRef<FlatList>(null);
@@ -121,6 +140,30 @@ export default function ProjectDetailScreen() {
               </Text>
             </Pressable>
 
+            <Pressable 
+              style={[
+                styles.reorderButton,
+                { 
+                  backgroundColor: isBatchProcessing ? theme.primary : 'transparent',
+                  opacity: isBatchProcessing ? 0.6 : 1
+                }
+              ]}
+              onPress={handleBatchProcess}
+              disabled={isBatchProcessing || capturedPages.length === 0}
+            >
+              <MaterialIcons 
+                name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"} 
+                size={16} 
+                color={isBatchProcessing ? "white" : theme.primary} 
+              />
+              <Text style={[
+                styles.reorderButtonText,
+                { color: isBatchProcessing ? "white" : theme.primary }
+              ]}>
+                {isBatchProcessing ? 'Processing...' : 'Process All Pages'}
+              </Text>
+            </Pressable>
+
             {hasPagesWithPhotos && (
               <ExportPdfButton
                 onPress={handleExportPdf}
@@ -185,6 +228,8 @@ export default function ProjectDetailScreen() {
               page={item}
               onView={handleViewPage}
               onDelete={handleDeletePage}
+              onProcessAI={processPageWithAI}
+              isBatchProcessing={isBatchProcessing}
             />
           )}
           keyExtractor={(item) => item.id}
