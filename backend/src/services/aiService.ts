@@ -64,7 +64,7 @@ export class OllamaProvider implements AIProvider {
         throw new Error(`Ollama API error: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as any;
       const processingTime = Date.now() - startTime;
 
       // Debug: Log the full response from Ollama
@@ -139,7 +139,7 @@ export class OllamaProvider implements AIProvider {
           });
 
           if (alternativeResponse.ok) {
-            const altResult = await alternativeResponse.json();
+            const altResult = await alternativeResponse.json() as any;
             const altText = altResult.message?.content || altResult.response || '';
             
             if (altText && !altText.toLowerCase().includes('the image')) {
