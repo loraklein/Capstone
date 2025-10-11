@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/database';
+import { storageService } from '../services/storageService';
 
 export const getProjectPages = async (req: Request, res: Response) => {
   try {
@@ -225,7 +226,18 @@ export const deletePage = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Page not found' });
     }
 
-    // Delete the page
+    // Delete the image from storage first (if it exists)
+    if (page.photo_url) {
+      try {
+        await storageService.deleteImage(page.photo_url);
+        console.log('Deleted image from storage:', page.photo_url);
+      } catch (storageError) {
+        console.error('Error deleting image from storage:', storageError);
+        // Don't fail the request if storage deletion fails, but log it
+      }
+    }
+
+    // Delete the page from database
     const { error } = await supabase
       .from('pages')
       .delete()

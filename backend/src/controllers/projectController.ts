@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/database';
+import { storageService } from '../services/storageService';
 
 export const createProject = async (req: Request, res: Response) => {
   try {
@@ -161,7 +162,33 @@ export const deleteProject = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
-    // First, delete all pages associated with this project
+    // First, get all pages to delete their images from storage
+    const { data: pages, error: fetchError } = await supabase
+      .from('pages')
+      .select('photo_url')
+      .eq('project_id', id);
+
+    if (fetchError) {
+      console.error('Error fetching pages for deletion:', fetchError);
+      // Continue with deletion even if fetch fails
+    }
+
+    // Delete all images from storage
+    if (pages && pages.length > 0) {
+      for (const page of pages) {
+        if (page.photo_url) {
+          try {
+            await storageService.deleteImage(page.photo_url);
+            console.log('Deleted image from storage:', page.photo_url);
+          } catch (storageError) {
+            console.error('Error deleting image from storage:', storageError);
+            // Don't fail the request, just log the error
+          }
+        }
+      }
+    }
+
+    // Then delete all pages from database
     const { error: pagesError } = await supabase
       .from('pages')
       .delete()
@@ -172,7 +199,7 @@ export const deleteProject = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to delete project pages' });
     }
 
-    // Then delete the project
+    // Finally delete the project
     const { error } = await supabase
       .from('projects')
       .delete()

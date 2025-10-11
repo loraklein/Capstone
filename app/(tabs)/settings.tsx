@@ -225,20 +225,6 @@ export default function SettingsScreen() {
             <MaterialIcons name="chevron-right" size={24} color={theme.textSecondary} />
           </Pressable>
         </View>
-        <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>About</Text>
-          <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>
-            <View style={styles.settingInfo}>
-              <MaterialIcons name="info" size={24} color={theme.primary} />
-              <View style={styles.settingText}>
-                <Text style={[styles.settingTitle, { color: theme.text }]}>Version</Text>
-                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
-                  DocuScan v1.0.0
-                </Text>
-              </View>
-            </View>
-          </View>
-        </View>
       </View>
     </ScrollView>
   );
