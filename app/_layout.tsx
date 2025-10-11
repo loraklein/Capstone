@@ -5,7 +5,12 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { apiService } from '../utils/apiService';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import * as SplashScreen from 'expo-splash-screen';
+import * as Font from 'expo-font';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 function StackLayout() {
   const { theme, themeMode } = useTheme();
@@ -13,11 +18,42 @@ function StackLayout() {
   const segments = useSegments();
   const router = useRouter();
   const colorScheme = useColorScheme();
+  const [appIsReady, setAppIsReady] = useState(false);
 
   // Set up API service with auth token provider
   useEffect(() => {
     apiService.setAccessTokenProvider(getAccessToken);
   }, [getAccessToken]);
+
+  // Handle splash screen visibility and load fonts
+  useEffect(() => {
+    async function prepare() {
+      try {
+        // Load custom fonts
+        await Font.loadAsync({
+          'Blinker-Regular': require('../assets/fonts/Blinker-Regular.ttf'),
+          'Blinker-SemiBold': require('../assets/fonts/Blinker-SemiBold.ttf'),
+        });
+        
+        // Keep splash screen visible for at least 2 seconds (for testing)
+        // Remove this delay in production!
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      } catch (e) {
+        console.warn(e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    prepare();
+  }, []);
+
+  // Hide splash screen when app is ready
+  useEffect(() => {
+    if (appIsReady && !loading) {
+      SplashScreen.hideAsync();
+    }
+  }, [appIsReady, loading]);
 
   // Handle authentication redirects
   useEffect(() => {
@@ -41,8 +77,8 @@ function StackLayout() {
     return themeMode === 'light' ? 'dark' : 'light';
   };
 
-  // Show nothing while checking auth status
-  if (loading) {
+  // Show nothing while checking auth status or preparing app
+  if (loading || !appIsReady) {
     return null;
   }
 

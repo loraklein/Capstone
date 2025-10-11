@@ -35,7 +35,7 @@ export default function TabLayout() {
           tabBarIcon: ({ color, size }) => (
             <MaterialIcons name="folder" size={size} color={color} />
           ),
-          headerTitle: 'DocuScan',
+          headerTitle: 'Projects',
         }}
       />
       <Tabs.Screen

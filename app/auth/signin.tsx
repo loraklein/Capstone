@@ -4,6 +4,7 @@ import {
   Text,
   TextInput,
   TouchableOpacity,
+  Pressable,
   StyleSheet,
   KeyboardAvoidingView,
   Platform,
@@ -13,6 +14,7 @@ import {
 import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import Logo from '../../components/Logo';
 
 export default function SignInScreen() {
   const [email, setEmail] = useState('');
@@ -47,9 +49,10 @@ export default function SignInScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <View style={styles.content}>
-        <Text style={[styles.title, { color: colors.text }]}>Welcome Back</Text>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-          Sign in to continue
+        <Logo size="large" showText={true} />
+        <View style={styles.divider} />
+        <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
+          Sign In to Continue
         </Text>
 
         <TextInput
@@ -76,17 +79,21 @@ export default function SignInScreen() {
           onSubmitEditing={handleSignIn}
         />
 
-        <TouchableOpacity
-          style={[styles.button, { backgroundColor: colors.primary }, loading && styles.buttonDisabled]}
+        <Pressable
+          style={({ pressed }) => [
+            styles.button,
+            { backgroundColor: pressed ? (colors.primary === '#6F7F61' ? '#7A8B6B' : '#556245') : colors.primary },
+            loading && styles.buttonDisabled
+          ]}
           onPress={handleSignIn}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator color="#fff" />
+            <ActivityIndicator color={colors.primaryText} />
           ) : (
-            <Text style={styles.buttonText}>Sign In</Text>
+            <Text style={[styles.buttonText, { color: colors.primaryText }]}>Sign In</Text>
           )}
-        </TouchableOpacity>
+        </Pressable>
 
         <View style={styles.footer}>
           <Text style={[styles.footerText, { color: colors.textSecondary }]}>
@@ -112,15 +119,13 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: 'center',
   },
-  title: {
-    fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
+  divider: {
+    height: 40,
   },
-  subtitle: {
-    fontSize: 16,
-    marginBottom: 32,
+  formLabel: {
+    fontSize: 18,
+    fontWeight: '400',
+    marginBottom: 16,
     textAlign: 'center',
   },
   input: {
@@ -140,7 +145,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -150,10 +154,10 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   footerText: {
-    fontSize: 14,
+    fontSize: 15,
   },
   link: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
   },
 });

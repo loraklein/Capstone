@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "project-1-loraklein",
-    "slug": "project-1-loraklein",
+    "name": "PastForward",
+    "slug": "pastforward",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -35,13 +35,13 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 200,
           "resizeMode": "contain",
-          "backgroundColor": "#ffffff"
+          "backgroundColor": "#FDFDFC"
         }
       ],
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow DocuScan to access your camera to capture document pages."
+          "cameraPermission": "Allow PastForward to access your camera to capture document pages."
         }
       ]
     ],
