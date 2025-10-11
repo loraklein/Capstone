@@ -3,11 +3,12 @@ import Constants from 'expo-constants';
 
 // Backend API configuration
 // Priority: Environment variable > hardcoded fallback
-// For local development, you can change the fallback IP address below
+// Production: Uses Render deployment
+// Local dev: Set EXPO_PUBLIC_API_URL=http://192.168.0.207:3001/api in your environment
 const API_BASE_URL = 
   Constants.expoConfig?.extra?.apiUrl || 
   process.env.EXPO_PUBLIC_API_URL || 
-  'http://192.168.0.207:3001/api'; // Change this IP when switching networks
+  'https://capstone-backend-og2c.onrender.com/api'; // Render production URL
 
 // API service for backend communication
 export class ApiService {
