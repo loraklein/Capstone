@@ -1,11 +1,15 @@
 import { Router } from 'express';
-import { createTestUser, getTestUser, getTestUserByEmail } from '../controllers/userController';
+import { signUp, signIn, signOut, getCurrentUser } from '../controllers/userController';
+import { authenticateUser } from '../middleware/auth';
 
 const router = Router();
 
-// Test user routes (no auth required for testing)
-router.post('/test', createTestUser);
-router.get('/test/:id', getTestUser);
-router.get('/test/email/:email', getTestUserByEmail);
+// Public auth routes (no authentication required)
+router.post('/signup', signUp);
+router.post('/signin', signIn);
+
+// Protected auth routes (require authentication)
+router.post('/signout', authenticateUser, signOut);
+router.get('/me', authenticateUser, getCurrentUser);
 
 export default router;

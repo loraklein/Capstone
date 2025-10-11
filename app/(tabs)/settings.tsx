@@ -4,11 +4,16 @@ import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProjects } from '../../hooks/useProjects';
+import { useAuth } from '../../contexts/AuthContext';
+import { useRouter } from 'expo-router';
 
 export default function SettingsScreen() {
   const { theme, themeMode, setThemeMode } = useTheme();
   const { clearStorage } = useProjects();
+  const { user, signOut } = useAuth();
+  const router = useRouter();
   const [isClearing, setIsClearing] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   const handleClearAllData = async () => {
     Alert.alert(
@@ -42,9 +47,73 @@ export default function SettingsScreen() {
     setThemeMode(newThemeMode);
   };
 
+  const handleSignOut = () => {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            setIsSigningOut(true);
+            try {
+              await signOut();
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+              router.replace('/auth/signin');
+            } catch (error) {
+              console.log('Error signing out:', error);
+              Alert.alert('Error', 'Failed to sign out. Please try again.');
+            } finally {
+              setIsSigningOut(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
+          <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>
+            <View style={styles.settingInfo}>
+              <MaterialIcons name="person" size={24} color={theme.primary} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingTitle, { color: theme.text }]}>Email</Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+                  {user?.email || 'Not signed in'}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <Pressable
+            style={({ pressed }) => [
+              styles.settingItem,
+              {
+                borderBottomColor: theme.divider,
+                opacity: pressed ? 0.7 : 1,
+              }
+            ]}
+            onPress={handleSignOut}
+            disabled={isSigningOut}
+          >
+            <View style={styles.settingInfo}>
+              <MaterialIcons name="logout" size={24} color={theme.error} />
+              <View style={styles.settingText}>
+                <Text style={[styles.settingTitle, { color: theme.error }]}>Sign Out</Text>
+                <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
+                  {isSigningOut ? 'Signing out...' : 'Log out of your account'}
+                </Text>
+              </View>
+            </View>
+            <MaterialIcons name="chevron-right" size={24} color={theme.textSecondary} />
+          </Pressable>
+        </View>
+
         <View style={styles.section}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
           <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>

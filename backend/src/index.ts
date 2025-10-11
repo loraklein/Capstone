@@ -21,14 +21,14 @@ import userRoutes from './routes/userRoutes';
 import { authenticateUser } from './middleware/auth';
 
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
     ? ['https://yourdomain.com'] // Replace with your production domain
-    : ['http://localhost:8081', 'http://localhost:3000'], // Expo dev server
+    : true, // Allow all origins in development (for mobile testing)
   credentials: true
 }));
 app.use(morgan('combined')); // Logging
@@ -73,10 +73,11 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 });
 
 // Start server
-app.listen(PORT, async () => {
+app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📱 Health check: http://localhost:${PORT}/health`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+  console.log(`📡 Listening on all network interfaces (0.0.0.0:${PORT})`);
   
   // Test database connection
   await testConnection();

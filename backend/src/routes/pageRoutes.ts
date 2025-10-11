@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import {
   getProjectPages,
+  getPage,
   addPage,
   updatePage,
   deletePage,
@@ -11,6 +12,7 @@ const router = Router();
 
 // All routes require authentication (we'll add auth middleware later)
 router.get('/project/:projectId', getProjectPages);
+router.get('/:id', getPage);
 router.post('/project/:projectId', addPage);
 router.put('/:id', updatePage);
 router.delete('/:id', deletePage);

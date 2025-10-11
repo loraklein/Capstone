@@ -1,96 +1,172 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/database';
-import bcrypt from 'bcryptjs';
 
-export const createTestUser = async (req: Request, res: Response) => {
+// Sign up new user
+export const signUp = async (req: Request, res: Response) => {
   try {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+      return res.status(400).json({ 
+        error: 'Email and password are required' 
+      });
     }
 
-    // Hash the password
-    const saltRounds = 10;
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        error: 'Password must be at least 6 characters long' 
+      });
+    }
 
-    // Create user
-    const { data, error } = await supabase
+    // Create user with Supabase Auth
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Signup error:', error);
+      return res.status(400).json({ 
+        error: error.message || 'Failed to create account' 
+      });
+    }
+
+    if (!data.user) {
+      return res.status(500).json({ 
+        error: 'Failed to create user account' 
+      });
+    }
+
+    // Also create user record in our users table
+    const { error: dbError } = await supabase
       .from('users')
       .insert([
         {
-          email,
-          password_hash: passwordHash
+          id: data.user.id, // Use the same ID as auth.users
+          email: data.user.email,
+          created_at: new Date().toISOString()
         }
-      ])
-      .select()
-      .single();
+      ]);
 
-    if (error) {
-      console.error('Error creating user:', error);
-      return res.status(500).json({ error: 'Failed to create user' });
+    if (dbError) {
+      console.error('Error creating user record:', dbError);
+      // Don't fail signup if user record creation fails - auth user still exists
     }
 
     res.status(201).json({
-      message: 'User created successfully',
+      message: 'Account created successfully',
       user: {
-        id: data.id,
-        email: data.email,
-        created_at: data.created_at
-      }
+        id: data.user.id,
+        email: data.user.email
+      },
+      session: data.session
     });
   } catch (error) {
-    console.error('Error in createTestUser:', error);
+    console.error('Error in signUp:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };
 
-export const getTestUser = async (req: Request, res: Response) => {
+// Sign in existing user
+export const signIn = async (req: Request, res: Response) => {
   try {
-    const { id } = req.params;
+    const { email, password } = req.body;
 
+    if (!email || !password) {
+      return res.status(400).json({ 
+        error: 'Email and password are required' 
+      });
+    }
+
+    // Sign in with Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      console.error('Signin error:', error);
+      return res.status(401).json({ 
+        error: 'Invalid email or password' 
+      });
+    }
+
+    if (!data.user || !data.session) {
+      return res.status(401).json({ 
+        error: 'Invalid email or password' 
+      });
+    }
+
+    res.json({
+      message: 'Signed in successfully',
+      user: {
+        id: data.user.id,
+        email: data.user.email
+      },
+      session: data.session
+    });
+  } catch (error) {
+    console.error('Error in signIn:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Sign out user
+export const signOut = async (req: Request, res: Response) => {
+  try {
+    const authHeader = req.headers.authorization;
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        error: 'No authorization token provided' 
+      });
+    }
+
+    const token = authHeader.substring(7);
+
+    // Sign out from Supabase Auth
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
+      console.error('Signout error:', error);
+      return res.status(500).json({ 
+        error: 'Failed to sign out' 
+      });
+    }
+
+    res.json({
+      message: 'Signed out successfully'
+    });
+  } catch (error) {
+    console.error('Error in signOut:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Get current user profile
+export const getCurrentUser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Not authenticated' });
+    }
+
+    // Get user data from our users table
     const { data, error } = await supabase
       .from('users')
       .select('id, email, created_at')
-      .eq('id', id)
+      .eq('id', userId)
       .single();
 
     if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'User not found' });
-      }
       console.error('Error fetching user:', error);
-      return res.status(500).json({ error: 'Failed to fetch user' });
+      return res.status(404).json({ error: 'User not found' });
     }
 
     res.json(data);
   } catch (error) {
-    console.error('Error in getTestUser:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-};
-
-export const getTestUserByEmail = async (req: Request, res: Response) => {
-  try {
-    const { email } = req.params;
-
-    const { data, error } = await supabase
-      .from('users')
-      .select('id, email, created_at')
-      .eq('email', email)
-      .single();
-
-    if (error) {
-      if (error.code === 'PGRST116') {
-        return res.status(404).json({ error: 'User not found' });
-      }
-      console.error('Error fetching user by email:', error);
-      return res.status(500).json({ error: 'Failed to fetch user' });
-    }
-
-    res.json(data);
-  } catch (error) {
-    console.error('Error in getTestUserByEmail:', error);
+    console.error('Error in getCurrentUser:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

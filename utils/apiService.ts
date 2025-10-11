@@ -1,27 +1,41 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
 
 // Backend API configuration
-const API_BASE_URL = 'http://144.38.182.71:3001/api';
-const TEST_USER_ID = '39fcd9b8-7c1b-41b1-8980-931a616ead82'; // Temporary test user
+// Priority: Environment variable > hardcoded fallback
+// For local development, you can change the fallback IP address below
+const API_BASE_URL = 
+  Constants.expoConfig?.extra?.apiUrl || 
+  process.env.EXPO_PUBLIC_API_URL || 
+  'http://192.168.0.207:3001/api'; // Change this IP when switching networks
 
 // API service for backend communication
 export class ApiService {
   private baseURL: string;
-  private userId: string;
+  private getAccessToken: (() => string | null) | null = null;
 
-  constructor(baseURL: string = API_BASE_URL, userId: string = TEST_USER_ID) {
+  constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
-    this.userId = userId;
+  }
+
+  // Set the access token provider function
+  setAccessTokenProvider(provider: () => string | null) {
+    this.getAccessToken = provider;
   }
 
   // Helper method to make API requests
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
     
-    const defaultHeaders = {
+    const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
-      'x-user-id': this.userId,
     };
+
+    // Add authorization header if we have an access token
+    const accessToken = this.getAccessToken?.();
+    if (accessToken) {
+      defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
+    }
 
     const response = await fetch(url, {
       ...options,

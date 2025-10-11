@@ -41,6 +41,37 @@ export const getProjectPages = async (req: Request, res: Response) => {
   }
 };
 
+export const getPage = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Get the page and verify it belongs to a project owned by the user
+    const { data: page, error } = await supabase
+      .from('pages')
+      .select(`
+        *,
+        projects!inner(user_id)
+      `)
+      .eq('id', id)
+      .eq('projects.user_id', userId)
+      .single();
+
+    if (error || !page) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+
+    res.json(page);
+  } catch (error) {
+    console.error('Error in getPage:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const addPage = async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;
