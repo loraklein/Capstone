@@ -9,6 +9,7 @@ interface ProjectHeaderProps {
   pageCount: number;
   showAddButton?: boolean;
   onAddPage?: () => void;
+  onBack?: () => void;
 }
 
 export default function ProjectHeader({ 
@@ -16,13 +17,22 @@ export default function ProjectHeader({
   description, 
   pageCount,
   showAddButton,
-  onAddPage
+  onAddPage,
+  onBack
 }: ProjectHeaderProps) {
   const { theme } = useTheme();
 
   return (
     <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
       <View style={styles.headerTop}>
+        {onBack && (
+          <Pressable 
+            style={[styles.backButton, { backgroundColor: theme.secondary }]}
+            onPress={onBack}
+          >
+            <MaterialIcons name="arrow-back" size={24} color={theme.text} />
+          </Pressable>
+        )}
         <View style={styles.headerContent}>
           <Text style={[styles.projectName, { color: theme.text }]}>
             {projectName}
@@ -74,6 +84,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-start',
     marginBottom: 16,
+    gap: 12,
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   headerContent: {
     flex: 1,

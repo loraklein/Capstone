@@ -1,21 +1,26 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { CapturedPage } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import PagePhoto from './PagePhoto';
+
+const IS_WEB = Platform.OS === 'web';
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const IS_LARGE_SCREEN = SCREEN_WIDTH > 768;
 
 interface PageCardProps {
   page: CapturedPage;
   onView: (page: CapturedPage) => void;
   onDelete: (pageId: string) => void;
   onProcessAI?: (pageId: string) => Promise<void>;
+  onEditText?: (page: CapturedPage) => void;
   isBatchProcessing?: boolean;
 }
 
-export default function PageCard({ page, onView, onDelete, onProcessAI, isBatchProcessing = false }: PageCardProps) {
+export default function PageCard({ page, onView, onDelete, onProcessAI, onEditText, isBatchProcessing = false }: PageCardProps) {
   const { theme } = useTheme();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showFullText, setShowFullText] = useState(false);
@@ -108,22 +113,45 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, isBatchP
       <View style={[styles.aiSection, { backgroundColor: theme.surface }]}>
         {page.extracted_text ? (
           <View style={styles.extractedTextContainer}>
-            <Text style={[styles.extractedTextLabel, { color: theme.textSecondary }]}>
-              Extracted Text:
-            </Text>
+            <View style={styles.extractedTextHeader}>
+              <Text style={[styles.extractedTextLabel, { color: theme.textSecondary }]}>
+                Extracted Text:
+              </Text>
+              {onEditText && page.extracted_text && (
+                <Pressable
+                  style={[styles.editButton, { backgroundColor: theme.primary }]}
+                  onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    onEditText(page);
+                  }}
+                >
+                  <MaterialIcons name="edit" size={14} color="white" />
+                  <Text style={styles.editButtonText}>Edit</Text>
+                </Pressable>
+              )}
+            </View>
             <Pressable 
               onPress={handleTextPress}
               style={styles.textPressableArea}
             >
               <Text 
-                style={[styles.extractedText, { color: theme.text }]} 
-                numberOfLines={showFullText ? undefined : 3}
+                style={[
+                  IS_LARGE_SCREEN ? styles.extractedTextLarge : styles.extractedText,
+                  { color: theme.text }
+                ]} 
+                numberOfLines={showFullText ? undefined : (IS_LARGE_SCREEN ? 5 : 3)}
               >
-                {page.extracted_text}
+                {page.edited_text || page.extracted_text}
               </Text>
-              {page.extracted_text.length > 100 && (
-                <Text style={[styles.expandText, { color: theme.primary }]}>
-                  {showFullText ? 'Tap to collapse' : 'Tap to expand'}
+              {page.edited_text && (
+                <View style={styles.editedBadge}>
+                  <MaterialIcons name={IS_LARGE_SCREEN ? "check-circle" : "check-circle"} size={IS_LARGE_SCREEN ? 12 : 10} color={theme.success} />
+                  <Text style={[IS_LARGE_SCREEN ? styles.editedTextLarge : styles.editedTextSmall, { color: theme.success }]}>Edited</Text>
+                </View>
+              )}
+              {(page.edited_text || page.extracted_text).length > 100 && (
+                <Text style={[IS_LARGE_SCREEN ? styles.expandTextLarge : styles.expandText, { color: theme.primary }]}>
+                  {showFullText ? (IS_WEB ? 'Click to collapse' : 'Tap to collapse') : (IS_WEB ? 'Click to expand' : 'Tap to expand')}
                 </Text>
               )}
             </Pressable>
@@ -198,23 +226,69 @@ const styles = StyleSheet.create({
   extractedTextContainer: {
     flex: 1,
   },
-  textPressableArea: {
-    paddingVertical: 4,
+  extractedTextHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 4,
   },
   extractedTextLabel: {
     fontSize: 12,
     fontWeight: '600',
-    marginBottom: 4,
+  },
+  editButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    gap: 4,
+  },
+  editButtonText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  textPressableArea: {
+    paddingVertical: 4,
+  },
+  editedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
+  editedText: {
+    fontSize: 10,
+    fontWeight: '600',
   },
   extractedText: {
     fontSize: 12,
     lineHeight: 16,
     marginBottom: 4,
   },
+  extractedTextLarge: {
+    fontSize: 15,
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  editedTextSmall: {
+    fontSize: 10,
+    fontWeight: '600',
+  },
+  editedTextLarge: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
   expandText: {
     fontSize: 10,
     fontStyle: 'italic',
     marginTop: 2,
+  },
+  expandTextLarge: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   confidenceText: {
     fontSize: 10,

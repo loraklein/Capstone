@@ -1,14 +1,18 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
 import DraggableFlatList from 'react-native-draggable-flatlist';
+
+const SCREEN_WIDTH = Dimensions.get('window').width;
+const NUM_COLUMNS = SCREEN_WIDTH > 1024 ? 4 : SCREEN_WIDTH > 768 ? 3 : 2;
 import CameraCapture from '../../components/CameraCapture';
 import ConfirmationDialog from '../../components/ConfirmationDialog';
 import DraggablePageCard from '../../components/DraggablePageCard';
 import EmptyState from '../../components/EmptyState';
 import ExportPdfButton from '../../components/ExportPdfButton';
+import LineByLineTextEditor from '../../components/LineByLineTextEditor';
 import PageCard from '../../components/PageCard';
 import PhotoViewer from '../../components/PhotoViewer';
 import ProjectHeader from '../../components/ProjectHeader';
@@ -26,10 +30,11 @@ import { CapturedPage } from '../../types';
 
 const SCROLL_DELAY_MS = 300;
 const ESTIMATED_CARD_HEIGHT = 200;
-const CARDS_PER_ROW = 2;
+const CARDS_PER_ROW = NUM_COLUMNS;
 
 export default function ProjectDetailScreen() {
   const params = useLocalSearchParams();
+  const router = useRouter();
   const [hasAttemptedScroll, setHasAttemptedScroll] = useState(false);
   const [isListReady, setIsListReady] = useState(false);
 
@@ -39,7 +44,7 @@ export default function ProjectDetailScreen() {
   const description = params.description as string || '';
   const scrollToPage = params.scrollToPage as string;
 
-  const { capturedPages, addPage, deletePage, reorderPagesWithArray, updatePageRotation, processPageWithAI, batchProcessProject } = useProjectPages(projectId);
+  const { capturedPages, addPage, deletePage, reorderPagesWithArray, updatePageRotation, processPageWithAI, batchProcessProject, reloadPages } = useProjectPages(projectId);
   const { refreshProjects } = useProjects();
   const { isGenerating, generatePdf } = usePdfGeneration();
   const { showCamera, handleAddPage, handleCameraCapture, handleCameraClose } = useCameraManagement({ addPage });
@@ -48,6 +53,8 @@ export default function ProjectDetailScreen() {
   const { isReorderMode, handleToggleReorderMode } = useReorderMode();
   const { hasPagesWithPhotos, handleExportPdf } = usePdfExport({ projectName, description, capturedPages, generatePdf });
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
+  const [showTextEditor, setShowTextEditor] = useState(false);
+  const [editingPage, setEditingPage] = useState<CapturedPage | null>(null);
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
@@ -65,6 +72,33 @@ export default function ProjectDetailScreen() {
       setIsBatchProcessing(false);
     }
   };
+
+  const handleEditText = (page: CapturedPage) => {
+    setEditingPage(page);
+    setShowTextEditor(true);
+  };
+
+  const handleSaveEditedText = async (pageId: string, editedText: string) => {
+    try {
+      const { apiService } = await import('../../utils/apiService');
+      await apiService.updatePageText(pageId, editedText);
+      // Reload pages to get updated data
+      await reloadPages();
+    } catch (error) {
+      console.log('Error saving edited text:', error);
+      throw error;
+    }
+  };
+
+  const handleCloseTextEditor = () => {
+    setShowTextEditor(false);
+    setEditingPage(null);
+  };
+
+  const handleBack = () => {
+    router.back();
+  };
+
   useCameraOrientation(showCamera);
 
   const flatListRef = useRef<FlatList>(null);
@@ -115,6 +149,7 @@ export default function ProjectDetailScreen() {
         pageCount={capturedPages.length}
         showAddButton={capturedPages.length > 0 && !isReorderMode}
         onAddPage={handleAddPage}
+        onBack={handleBack}
       />
 
       {capturedPages.length > 1 && (
@@ -229,11 +264,13 @@ export default function ProjectDetailScreen() {
               onView={handleViewPage}
               onDelete={handleDeletePage}
               onProcessAI={processPageWithAI}
+              onEditText={handleEditText}
               isBatchProcessing={isBatchProcessing}
             />
           )}
           keyExtractor={(item) => item.id}
-          numColumns={2}
+          numColumns={NUM_COLUMNS}
+          key={`grid-${NUM_COLUMNS}`}
           contentContainerStyle={styles.pagesGrid}
           showsVerticalScrollIndicator={false}
           onLayout={() => setIsListReady(true)}
@@ -269,6 +306,15 @@ export default function ProjectDetailScreen() {
         onCancel={cancelDelete}
         confirmStyle="destructive"
       />
+
+      {editingPage && (
+        <LineByLineTextEditor
+          visible={showTextEditor}
+          page={editingPage}
+          onClose={handleCloseTextEditor}
+          onSave={handleSaveEditedText}
+        />
+      )}
     </View>
   );
 }

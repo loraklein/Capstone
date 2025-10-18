@@ -21,44 +21,45 @@ export default function SignUpScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
   const colors = theme;
 
   const handleSignUp = async () => {
+    // Clear any previous errors
+    setError('');
+    setSuccess(false);
+
     if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill in all fields');
+      setError('Please fill in all fields');
       return;
     }
 
     if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      setError('Passwords do not match');
       return;
     }
 
     if (password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters long');
+      setError('Password must be at least 6 characters long');
       return;
     }
 
     setLoading(true);
-    const { error } = await signUp(email, password);
+    const { error: signUpError } = await signUp(email, password);
     setLoading(false);
 
-    if (error) {
-      Alert.alert('Sign Up Failed', error.message || 'Could not create account');
+    if (signUpError) {
+      setError(signUpError.message || 'Could not create account. Please try again.');
     } else {
-      Alert.alert(
-        'Success!',
-        'Your account has been created. You can now sign in.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.replace('/'),
-          },
-        ]
-      );
+      setSuccess(true);
+      // Auto-redirect after 2 seconds
+      setTimeout(() => {
+        router.replace('/');
+      }, 2000);
     }
   };
 
@@ -73,6 +74,20 @@ export default function SignUpScreen() {
         <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
           Create an Account
         </Text>
+
+        {error ? (
+          <View style={[styles.messageContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+            <Text style={[styles.messageText, { color: colors.error }]}>{error}</Text>
+          </View>
+        ) : null}
+
+        {success ? (
+          <View style={[styles.messageContainer, { backgroundColor: colors.success + '15', borderColor: colors.success }]}>
+            <Text style={[styles.messageText, { color: colors.success }]}>
+              Account created successfully! Redirecting...
+            </Text>
+          </View>
+        ) : null}
 
         <TextInput
           style={[styles.input, { color: colors.text, borderColor: colors.border }]}
@@ -189,6 +204,16 @@ const styles = StyleSheet.create({
   link: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  messageContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  messageText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 

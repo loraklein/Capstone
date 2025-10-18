@@ -8,6 +8,8 @@ export interface CapturedPage {
   projectId?: string;
   photo_url?: string;
   extracted_text?: string;
+  edited_text?: string;
+  ai_annotations?: any[]; // Google Vision word-level annotations
   ai_processed_at?: string;
   ai_confidence?: number;
   ai_provider?: string;

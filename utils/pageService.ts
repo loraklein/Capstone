@@ -13,6 +13,8 @@ export interface CapturedPage {
   // Backend fields
   photo_url?: string;
   extracted_text?: string;
+  edited_text?: string;
+  ai_annotations?: any[];
   ai_processed_at?: string;
   ai_confidence?: number;
   ai_provider?: string;
@@ -43,6 +45,8 @@ class PageService {
         timestamp: new Date(page.created_at),
         photo_url: page.photo_url,
         extracted_text: page.extracted_text,
+        edited_text: page.edited_text,
+        ai_annotations: page.ai_annotations,
         ai_processed_at: page.ai_processed_at,
         ai_confidence: page.ai_confidence,
         ai_provider: page.ai_provider,
@@ -190,7 +194,7 @@ class PageService {
     }
   }
 
-  async processPageWithAI(pageId: string, provider: string = 'ollama'): Promise<any> {
+  async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
     try {
       return await apiService.processPageWithAI(pageId, provider);
     } catch (error) {
@@ -208,7 +212,7 @@ class PageService {
     }
   }
 
-  async batchProcessProject(projectId: string, provider: string = 'ollama'): Promise<any> {
+  async batchProcessProject(projectId: string, provider: string = 'google_vision'): Promise<any> {
     try {
       return await apiService.batchProcessProject(projectId, provider);
     } catch (error) {

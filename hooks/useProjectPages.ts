@@ -99,7 +99,7 @@ export function useProjectPages(projectId: string) {
   }, [projectId]);
 
   // AI processing functions
-  const processPageWithAI = async (pageId: string, provider: string = 'ollama') => {
+  const processPageWithAI = async (pageId: string, provider: string = 'google_vision') => {
     try {
       const result = await pageService.processPageWithAI(pageId, provider);
       
@@ -122,7 +122,7 @@ export function useProjectPages(projectId: string) {
     }
   };
 
-  const batchProcessProject = async (provider: string = 'ollama') => {
+  const batchProcessProject = async (provider: string = 'google_vision') => {
     try {
       const result = await pageService.batchProcessProject(projectId, provider);
       

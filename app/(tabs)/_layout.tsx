@@ -1,5 +1,6 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
+import { Platform } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 
 export default function TabLayout() {
@@ -14,6 +15,10 @@ export default function TabLayout() {
           backgroundColor: theme.surface,
           borderTopColor: theme.divider,
           borderTopWidth: 1,
+          height: Platform.OS === 'web' ? 60 : 50, // Taller on web for visibility
+        },
+        tabBarLabelStyle: {
+          fontSize: Platform.OS === 'web' ? 14 : 12, // Larger text on web
         },
         headerStyle: {
           backgroundColor: theme.surface,

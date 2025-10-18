@@ -2,13 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
 // Backend API configuration
-// Priority: Environment variable > hardcoded fallback
 // Production: Uses Render deployment
-// Local dev: Set EXPO_PUBLIC_API_URL=http://192.168.0.207:3001/api in your environment
+// Local dev: Uncomment line below and set your IP for local testing
+// const API_BASE_URL = 'http://192.168.0.208:3001/api';
 const API_BASE_URL = 
   Constants.expoConfig?.extra?.apiUrl || 
   process.env.EXPO_PUBLIC_API_URL || 
-  'https://capstone-backend-og2c.onrender.com/api'; // Render production URL
+  'https://capstone-backend-og2c.onrender.com/api';
 
 // API service for backend communication
 export class ApiService {
@@ -105,6 +105,13 @@ export class ApiService {
     });
   }
 
+  async updatePageText(pageId: string, editedText: string): Promise<any> {
+    return this.makeRequest(`/pages/${pageId}/text`, {
+      method: 'PUT',
+      body: JSON.stringify({ editedText }),
+    });
+  }
+
   async deletePage(pageId: string): Promise<any> {
     return this.makeRequest(`/pages/${pageId}`, {
       method: 'DELETE',
@@ -112,7 +119,7 @@ export class ApiService {
   }
 
   // AI processing
-  async processPageWithAI(pageId: string, provider: string = 'ollama'): Promise<any> {
+  async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
     return this.makeRequest(`/ai/pages/${pageId}/process`, {
       method: 'POST',
       body: JSON.stringify({ provider }),
@@ -128,7 +135,7 @@ export class ApiService {
   }
 
   // Batch AI processing
-  async batchProcessProject(projectId: string, provider: string = 'ollama'): Promise<any> {
+  async batchProcessProject(projectId: string, provider: string = 'google_vision'): Promise<any> {
     return this.makeRequest(`/ai/projects/${projectId}/batch-process`, {
       method: 'POST',
       body: JSON.stringify({ provider }),

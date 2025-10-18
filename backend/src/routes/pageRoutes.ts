@@ -4,6 +4,7 @@ import {
   getPage,
   addPage,
   updatePage,
+  updatePageText,
   deletePage,
   reorderPages
 } from '../controllers/pageController';
@@ -15,6 +16,7 @@ router.get('/project/:projectId', getProjectPages);
 router.get('/:id', getPage);
 router.post('/project/:projectId', addPage);
 router.put('/:id', updatePage);
+router.put('/:id/text', updatePageText); // Update edited text
 router.delete('/:id', deletePage);
 router.put('/project/:projectId/reorder', reorderPages);
 

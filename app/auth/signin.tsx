@@ -20,23 +20,27 @@ export default function SignInScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const { signIn } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
   const colors = theme;
 
   const handleSignIn = async () => {
+    // Clear any previous errors
+    setError('');
+
     if (!email || !password) {
-      Alert.alert('Error', 'Please enter both email and password');
+      setError('Please enter both email and password');
       return;
     }
 
     setLoading(true);
-    const { error } = await signIn(email, password);
+    const { error: signInError } = await signIn(email, password);
     setLoading(false);
 
-    if (error) {
-      Alert.alert('Sign In Failed', error.message || 'Invalid email or password');
+    if (signInError) {
+      setError(signInError.message || 'Invalid email or password. Please try again.');
     } else {
       // Navigation will be handled by auth state change
       router.replace('/');
@@ -54,6 +58,12 @@ export default function SignInScreen() {
         <Text style={[styles.formLabel, { color: colors.textSecondary }]}>
           Sign In to Continue
         </Text>
+
+        {error ? (
+          <View style={[styles.errorContainer, { backgroundColor: colors.error + '15', borderColor: colors.error }]}>
+            <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
+          </View>
+        ) : null}
 
         <TextInput
           style={[styles.input, { color: colors.text, borderColor: colors.border }]}
@@ -159,6 +169,16 @@ const styles = StyleSheet.create({
   link: {
     fontSize: 15,
     fontWeight: '600',
+  },
+  errorContainer: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorText: {
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
 

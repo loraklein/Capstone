@@ -290,6 +290,51 @@ export const deletePage = async (req: Request, res: Response) => {
   }
 };
 
+export const updatePageText = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { editedText } = req.body;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Verify the page belongs to a project owned by the user
+    const { data: page, error: pageError } = await supabase
+      .from('pages')
+      .select(`
+        *,
+        projects!inner(user_id)
+      `)
+      .eq('id', id)
+      .eq('projects.user_id', userId)
+      .single();
+
+    if (pageError || !page) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+
+    // Update the edited text
+    const { data, error } = await supabase
+      .from('pages')
+      .update({ edited_text: editedText })
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating page text:', error);
+      return res.status(500).json({ error: 'Failed to update page text' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in updatePageText:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 export const reorderPages = async (req: Request, res: Response) => {
   try {
     const { projectId } = req.params;

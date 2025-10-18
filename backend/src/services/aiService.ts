@@ -12,6 +12,7 @@ export interface AIResult {
   confidence: number;
   provider: string;
   processingTime?: number;
+  annotations?: any; // Detailed word/line data with bounding boxes
 }
 
 // Ollama Provider Implementation - Updated to match your setup
@@ -200,9 +201,19 @@ export class OllamaProvider implements AIProvider {
 }
 
 // Google Vision API Response Types
+interface GoogleVisionVertex {
+  x: number;
+  y: number;
+}
+
+interface GoogleVisionBoundingPoly {
+  vertices: GoogleVisionVertex[];
+}
+
 interface GoogleVisionTextAnnotation {
   description: string;
-  boundingPoly?: any;
+  boundingPoly?: GoogleVisionBoundingPoly;
+  locale?: string;
 }
 
 interface GoogleVisionResponse {
@@ -303,11 +314,16 @@ export class GoogleVisionProvider implements AIProvider {
 
       console.log('Extracted text:', extractedText.substring(0, 100) + '...');
 
+      // Store all annotations (skipping first one which is the full text)
+      // Index 0 = full text, Index 1+ = individual words with bounding boxes
+      const wordAnnotations = textAnnotations.slice(1);
+
       return {
         text: extractedText.trim(),
         confidence,
         provider: this.name,
-        processingTime
+        processingTime,
+        annotations: wordAnnotations // Store word-level data with bounding boxes
       };
     } catch (error) {
       console.error('Google Vision text extraction error:', error);
@@ -382,14 +398,15 @@ export class AIService {
       // Extract text using AI
       const result = await this.extractTextFromImage(imageUrl, provider);
 
-      // Update page with extracted text
+      // Update page with extracted text and annotations
       await supabase
         .from('pages')
         .update({
           extracted_text: result.text,
           ai_confidence: result.confidence,
           ai_processed_at: new Date().toISOString(),
-          processing_status: 'completed'
+          processing_status: 'completed',
+          ai_annotations: result.annotations || null
         })
         .eq('id', pageId);
 
