@@ -199,6 +199,19 @@ export class OllamaProvider implements AIProvider {
   }
 }
 
+// Google Vision API Response Types
+interface GoogleVisionTextAnnotation {
+  description: string;
+  boundingPoly?: any;
+}
+
+interface GoogleVisionResponse {
+  responses: Array<{
+    textAnnotations?: GoogleVisionTextAnnotation[];
+    fullTextAnnotation?: any;
+  }>;
+}
+
 // Google Vision Provider Implementation
 export class GoogleVisionProvider implements AIProvider {
   name = 'google_vision';
@@ -260,7 +273,7 @@ export class GoogleVisionProvider implements AIProvider {
         throw new Error(`Google Vision API error: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as GoogleVisionResponse;
       const processingTime = Date.now() - startTime;
 
       console.log('Google Vision response:', {
