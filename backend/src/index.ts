@@ -27,7 +27,13 @@ const PORT = parseInt(process.env.PORT || '3001', 10);
 app.use(helmet()); // Security headers
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://yourdomain.com'] // Replace with your production domain
+    ? [
+        'https://pastforward-testing.netlify.app', // Netlify deployment
+        'https://pastforward.netlify.app', // Alternative Netlify URL
+        /\.netlify\.app$/, // Any Netlify preview/branch deploys
+        /\.vercel\.app$/, // Vercel deployments
+        'exp://.*', // Expo Go
+      ]
     : true, // Allow all origins in development (for mobile testing)
   credentials: true
 }));
