@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useState } from 'react';
+import { Platform } from 'react-native';
 import { CapturedPage } from '../types';
 import { projectService } from '../utils/projectService';
 
@@ -23,18 +24,21 @@ export function useRecentPages() {
       
       for (const project of projects) {
         try {
-          const storedPages = await AsyncStorage.getItem(`project_pages_${project.id}`);
-          if (storedPages) {
-            const pages = JSON.parse(storedPages);
-            const pagesWithDates = pages.map((page: any) => ({
-              ...page,
-              timestamp: new Date(page.timestamp),
-              projectId: project.id,
-              projectName: project.name,
-              projectDescription: project.description,
-            }));
-            
-            allPages.push(...pagesWithDates);
+          // Skip AsyncStorage on web to prevent hydration issues
+          if (Platform.OS !== 'web') {
+            const storedPages = await AsyncStorage.getItem(`project_pages_${project.id}`);
+            if (storedPages) {
+              const pages = JSON.parse(storedPages);
+              const pagesWithDates = pages.map((page: any) => ({
+                ...page,
+                timestamp: new Date(page.timestamp),
+                projectId: project.id,
+                projectName: project.name,
+                projectDescription: project.description,
+              }));
+              
+              allPages.push(...pagesWithDates);
+            }
           }
         } catch (error) {
           console.log(`Error loading pages for project ${project.id}:`, error);

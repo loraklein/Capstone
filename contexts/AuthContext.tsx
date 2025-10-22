@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { createClient, Session, User } from '@supabase/supabase-js';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 // Supabase configuration
 const SUPABASE_URL = 'https://bhoodtyyzsywvbxoanjg.supabase.co';
@@ -46,6 +47,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadSession = async () => {
     try {
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS === 'web') {
+        setLoading(false);
+        return;
+      }
+      
       const sessionStr = await AsyncStorage.getItem('supabase_session');
       if (sessionStr) {
         const savedSession = JSON.parse(sessionStr);
@@ -67,6 +74,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const saveSession = async (session: Session) => {
     try {
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS === 'web') {
+        return;
+      }
       await AsyncStorage.setItem('supabase_session', JSON.stringify(session));
     } catch (error) {
       console.error('Error saving session:', error);
@@ -75,6 +86,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const clearSession = async () => {
     try {
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS === 'web') {
+        // On web, Supabase handles session clearing through cookies
+        // The auth state change listener will handle the rest
+        return;
+      }
       await AsyncStorage.removeItem('supabase_session');
     } catch (error) {
       console.error('Error clearing session:', error);
@@ -131,10 +148,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    await clearSession();
+    try {
+      // Sign out from Supabase first
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Error signing out:', error);
+      }
+      
+      // Clear local state
+      setSession(null);
+      setUser(null);
+      
+      // Clear session storage
+      await clearSession();
+      
+      // On web, redirect to sign in instead of reloading
+      if (Platform.OS === 'web') {
+        // Use router to navigate to sign in page
+        setTimeout(() => {
+          window.location.href = '/auth/signin';
+        }, 100);
+      }
+    } catch (error) {
+      console.error('Error in signOut:', error);
+      // Even if there's an error, clear the local state
+      setSession(null);
+      setUser(null);
+    }
   };
 
   const getAccessToken = () => {

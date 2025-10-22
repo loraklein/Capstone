@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
 import { apiService } from './apiService';
 
 export interface Project {
@@ -51,10 +52,12 @@ class ProjectService {
     } catch (error) {
       console.log('Error loading projects from backend, falling back to local storage:', error);
       
-      // Fallback to local storage if backend fails
-      const storedProjects = await AsyncStorage.getItem(this.STORAGE_KEY);
-      if (storedProjects) {
-        return JSON.parse(storedProjects);
+      // Fallback to local storage if backend fails (skip on web to prevent hydration issues)
+      if (Platform.OS !== 'web') {
+        const storedProjects = await AsyncStorage.getItem(this.STORAGE_KEY);
+        if (storedProjects) {
+          return JSON.parse(storedProjects);
+        }
       }
       return [];
     }
@@ -96,7 +99,10 @@ class ProjectService {
 
       const projects = await this.getAllProjects();
       projects.push(newProject);
-      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(projects));
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS !== 'web') {
+        await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(projects));
+      }
 
       return newProject;
     }
@@ -143,7 +149,10 @@ class ProjectService {
       };
 
       projects[projectIndex] = updatedProject;
-      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(projects));
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS !== 'web') {
+        await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(projects));
+      }
 
       return updatedProject;
     }
@@ -161,7 +170,10 @@ class ProjectService {
       
       const projects = await this.getAllProjects();
       const filteredProjects = projects.filter(p => p.id !== projectId);
-      await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(filteredProjects));
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS !== 'web') {
+        await AsyncStorage.setItem(this.STORAGE_KEY, JSON.stringify(filteredProjects));
+      }
     }
   }
 
@@ -181,26 +193,28 @@ class ProjectService {
   private async deleteProjectPages(projectId: string): Promise<void> {
     try {
       // This will be handled by the backend when deleting a project
-      // For local fallback, we'll clean up local storage
-      const storedPages = await AsyncStorage.getItem(`project_pages_${projectId}`);
-      if (storedPages) {
-        const pages = JSON.parse(storedPages);
-        
-        for (const page of pages) {
-          if (page.photoUri && page.photoUri.startsWith('file://')) {
-            try {
-              // Check if file exists before trying to delete it
-              const fileInfo = await FileSystem.getInfoAsync(page.photoUri);
-              if (fileInfo.exists) {
-                await FileSystem.deleteAsync(page.photoUri);
+      // For local fallback, we'll clean up local storage (skip on web to prevent hydration issues)
+      if (Platform.OS !== 'web') {
+        const storedPages = await AsyncStorage.getItem(`project_pages_${projectId}`);
+        if (storedPages) {
+          const pages = JSON.parse(storedPages);
+          
+          for (const page of pages) {
+            if (page.photoUri && page.photoUri.startsWith('file://')) {
+              try {
+                // Check if file exists before trying to delete it
+                const fileInfo = await FileSystem.getInfoAsync(page.photoUri);
+                if (fileInfo.exists) {
+                  await FileSystem.deleteAsync(page.photoUri);
+                }
+              } catch (error) {
+                console.log('Error deleting image file:', error);
               }
-            } catch (error) {
-              console.log('Error deleting image file:', error);
             }
           }
+          
+          await AsyncStorage.removeItem(`project_pages_${projectId}`);
         }
-        
-        await AsyncStorage.removeItem(`project_pages_${projectId}`);
       }
     } catch (error) {
       console.log('Error deleting project pages:', error);

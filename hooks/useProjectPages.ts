@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { CapturedPage } from '../types';
 import { projectService } from '../utils/projectService';
 import { pageService } from '../utils/pageService';
@@ -14,7 +15,6 @@ export function useProjectPages(projectId: string) {
     try {
       setIsLoading(true);
       const pages = await pageService.getProjectPages(projectId);
-      console.log('Loaded project pages:', pages.map(p => ({ id: p.id, pageNumber: p.pageNumber, idType: typeof p.id })));
       setCapturedPages(pages);
     } catch (error) {
       console.log('Error loading pages:', error);
@@ -25,6 +25,10 @@ export function useProjectPages(projectId: string) {
 
   const saveProjectPages = async (pages: CapturedPage[]) => {
     try {
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS === 'web') {
+        return;
+      }
       await AsyncStorage.setItem(`project_pages_${projectId}`, JSON.stringify(pages));
     } catch (error) {
       console.log('Error saving pages:', error);
@@ -102,7 +106,6 @@ export function useProjectPages(projectId: string) {
   // AI processing functions
   const processPageWithAI = async (pageId: string, provider: string = 'google_vision') => {
     try {
-      console.log('Processing page with AI:', { pageId, provider, pageIdType: typeof pageId });
       const result = await pageService.processPageWithAI(pageId, provider);
       
       // Reload pages to get updated AI data

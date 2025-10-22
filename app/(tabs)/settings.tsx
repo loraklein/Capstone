@@ -2,7 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Icon from '../../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProjects } from '../../hooks/useProjects';
 import { useAuth } from '../../contexts/AuthContext';
@@ -48,7 +48,23 @@ export default function SettingsScreen() {
     setThemeMode(newThemeMode);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
+    // On web, sign out directly without confirmation
+    if (Platform.OS === 'web') {
+      setIsSigningOut(true);
+      try {
+        await signOut();
+        router.replace('/auth/signin');
+      } catch (error) {
+        console.log('Error signing out:', error);
+        alert('Failed to sign out. Please try again.');
+      } finally {
+        setIsSigningOut(false);
+      }
+      return;
+    }
+
+    // On mobile, show confirmation dialog
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',

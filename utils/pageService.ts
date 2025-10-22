@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
+import { Platform } from 'react-native';
 import { apiService } from './apiService';
 import { supabaseService } from './supabaseService';
 
@@ -58,14 +59,16 @@ class PageService {
     } catch (error) {
       console.log('Error loading pages from backend, falling back to local storage:', error);
       
-      // Fallback to local storage if backend fails
-      const storedPages = await AsyncStorage.getItem(`${this.STORAGE_KEY_PREFIX}${projectId}`);
-      if (storedPages) {
-        const pages = JSON.parse(storedPages);
-        return pages.map((page: any) => ({
-          ...page,
-          timestamp: new Date(page.timestamp)
-        }));
+      // Fallback to local storage if backend fails (skip on web to prevent hydration issues)
+      if (Platform.OS !== 'web') {
+        const storedPages = await AsyncStorage.getItem(`${this.STORAGE_KEY_PREFIX}${projectId}`);
+        if (storedPages) {
+          const pages = JSON.parse(storedPages);
+          return pages.map((page: any) => ({
+            ...page,
+            timestamp: new Date(page.timestamp)
+          }));
+        }
       }
       return [];
     }
@@ -196,7 +199,6 @@ class PageService {
 
   async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
     try {
-      console.log('PageService: Processing page with AI:', { pageId, provider, pageIdType: typeof pageId });
       return await apiService.processPageWithAI(pageId, provider);
     } catch (error) {
       console.log('Error processing page with AI:', error);
@@ -224,6 +226,10 @@ class PageService {
 
   private async saveProjectPages(projectId: string, pages: CapturedPage[]): Promise<void> {
     try {
+      // Skip AsyncStorage on web to prevent hydration issues
+      if (Platform.OS === 'web') {
+        return;
+      }
       await AsyncStorage.setItem(`${this.STORAGE_KEY_PREFIX}${projectId}`, JSON.stringify(pages));
     } catch (error) {
       console.log('Error saving pages:', error);

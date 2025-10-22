@@ -34,7 +34,14 @@ app.use(cors({
         /\.vercel\.app$/, // Vercel deployments
         'exp://.*', // Expo Go
       ]
-    : true, // Allow all origins in development (for mobile testing)
+    : [
+        'http://localhost:8081', // Expo default port
+        'http://localhost:8082', // Alternative port
+        'http://localhost:3000', // Common dev port
+        'http://localhost:19006', // Expo web
+        /^http:\/\/localhost:\d+$/, // Any localhost port
+        'exp://.*', // Expo Go
+      ],
   credentials: true
 }));
 app.use(morgan('combined')); // Logging

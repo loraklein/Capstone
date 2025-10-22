@@ -3,12 +3,11 @@ import Constants from 'expo-constants';
 
 // Backend API configuration
 // Production: Uses Render deployment
-// Local dev: Uncomment line below and set your IP for local testing
-// const API_BASE_URL = 'http://192.168.0.208:3001/api';
+// Local dev: Use local backend
 const API_BASE_URL = 
   Constants.expoConfig?.extra?.apiUrl || 
   process.env.EXPO_PUBLIC_API_URL || 
-  'https://capstone-backend-og2c.onrender.com/api';
+  'http://localhost:3001/api';
 
 // API service for backend communication
 export class ApiService {
@@ -120,7 +119,6 @@ export class ApiService {
 
   // AI processing
   async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
-    console.log('ApiService: Making AI processing request:', { pageId, provider, url: `/ai/pages/${pageId}/process` });
     return this.makeRequest(`/ai/pages/${pageId}/process`, {
       method: 'POST',
       body: JSON.stringify({ provider }),
