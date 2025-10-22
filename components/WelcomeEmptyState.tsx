@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -24,7 +25,7 @@ export default function WelcomeEmptyState({ onPress }: WelcomeEmptyStateProps) {
       accessibilityLabel="Create your first project"
       accessibilityHint="Tap to create your first document scanning project"
     >
-      <MaterialIcons name="document-scanner" size={80} color={theme.primary} />
+      <Icon name="document-scanner" size={80} color={theme.primary} />
       <Text style={[styles.emptyTitle, { color: theme.text }]}>Welcome to DocuScan</Text>
       <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
         Tap here to create your first project

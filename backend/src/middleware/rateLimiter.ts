@@ -21,7 +21,10 @@ export const checkAIRateLimit = async (req: Request, res: Response, next: NextFu
 
     const { count: dailyCount, error: dailyError } = await supabase
       .from('pages')
-      .select('id', { count: 'exact', head: true })
+      .select(`
+        id,
+        projects!inner(user_id)
+      `, { count: 'exact', head: true })
       .eq('projects.user_id', userId)
       .gte('ai_processed_at', dayAgo.toISOString())
       .not('ai_processed_at', 'is', null);
@@ -44,7 +47,10 @@ export const checkAIRateLimit = async (req: Request, res: Response, next: NextFu
 
     const { count: hourlyCount, error: hourlyError } = await supabase
       .from('pages')
-      .select('id', { count: 'exact', head: true })
+      .select(`
+        id,
+        projects!inner(user_id)
+      `, { count: 'exact', head: true })
       .eq('projects.user_id', userId)
       .gte('ai_processed_at', hourAgo.toISOString())
       .not('ai_processed_at', 'is', null);

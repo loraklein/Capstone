@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import { Pressable, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
@@ -91,7 +92,7 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
             Page {page.pageNumber}
           </Text>
           <View style={styles.statusIndicator}>
-            <MaterialIcons 
+            <Icon 
               name={getStatusIcon()} 
               size={12} 
               color={getStatusColor()} 
@@ -103,7 +104,7 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
           onPress={handleDelete}
           accessibilityLabel="Delete page"
         >
-          <MaterialIcons name="delete" size={16} color={theme.error} />
+          <Icon name="delete" size={16} color={theme.error} />
         </Pressable>
       </View>
       
@@ -125,7 +126,7 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
                     onEditText(page);
                   }}
                 >
-                  <MaterialIcons name="edit" size={14} color="white" />
+                  <Icon name="edit" size={14} color="white" />
                   <Text style={styles.editButtonText}>Edit</Text>
                 </Pressable>
               )}
@@ -145,7 +146,7 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
               </Text>
               {page.edited_text && (
                 <View style={styles.editedBadge}>
-                  <MaterialIcons name={IS_LARGE_SCREEN ? "check-circle" : "check-circle"} size={IS_LARGE_SCREEN ? 12 : 10} color={theme.success} />
+                  <Icon name={IS_LARGE_SCREEN ? "check-circle" : "check-circle"} size={IS_LARGE_SCREEN ? 12 : 10} color={theme.success} />
                   <Text style={[IS_LARGE_SCREEN ? styles.editedTextLarge : styles.editedTextSmall, { color: theme.success }]}>Edited</Text>
                 </View>
               )}

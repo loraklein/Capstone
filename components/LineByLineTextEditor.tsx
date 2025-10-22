@@ -15,6 +15,7 @@ import {
 import { Image } from 'expo-image';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -185,7 +186,7 @@ export default function LineByLineTextEditor({
               No Text Detected
             </Text>
             <Pressable onPress={onClose} style={styles.closeButton}>
-              <MaterialIcons name="close" size={24} color={theme.text} />
+              <Icon name="close" size={24} color={theme.text} />
             </Pressable>
           </View>
           <View style={styles.emptyState}>
@@ -213,7 +214,7 @@ export default function LineByLineTextEditor({
             Edit Extracted Text
           </Text>
           <Pressable onPress={handleCancel} style={styles.closeButton}>
-            <MaterialIcons name="close" size={24} color={theme.text} />
+            <Icon name="close" size={24} color={theme.text} />
           </Pressable>
         </View>
 
@@ -233,19 +234,19 @@ export default function LineByLineTextEditor({
                     style={[styles.zoomButton, { backgroundColor: theme.secondary, borderColor: theme.border }]}
                     onPress={handleZoomOut}
                   >
-                    <MaterialIcons name="remove" size={20} color={theme.text} />
+                    <Icon name="remove" size={20} color={theme.text} />
                   </Pressable>
                   <Pressable
                     style={[styles.zoomButton, { backgroundColor: theme.secondary, borderColor: theme.border }]}
                     onPress={handleResetZoom}
                   >
-                    <MaterialIcons name="fit-screen" size={20} color={theme.text} />
+                    <Icon name="fit-screen" size={20} color={theme.text} />
                   </Pressable>
                   <Pressable
                     style={[styles.zoomButton, { backgroundColor: theme.secondary, borderColor: theme.border }]}
                     onPress={handleZoomIn}
                   >
-                    <MaterialIcons name="add" size={20} color={theme.text} />
+                    <Icon name="add" size={20} color={theme.text} />
                   </Pressable>
                 </View>
               </View>

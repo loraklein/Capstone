@@ -120,6 +120,7 @@ export class ApiService {
 
   // AI processing
   async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
+    console.log('ApiService: Making AI processing request:', { pageId, provider, url: `/ai/pages/${pageId}/process` });
     return this.makeRequest(`/ai/pages/${pageId}/process`, {
       method: 'POST',
       body: JSON.stringify({ provider }),

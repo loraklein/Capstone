@@ -2,6 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import Icon from './Icon';
 
 interface FloatingActionButtonProps {
   onPress: () => void;
@@ -37,7 +38,7 @@ export default function FloatingActionButton({
         ]} 
         onPress={onPress}
       >
-        <MaterialIcons name={icon} size={20} color="white" />
+        <Icon name={icon} size={20} color="white" />
         {label && (
           <Text style={[styles.fabLabel, { color: 'white' }]}>{label}</Text>
         )}

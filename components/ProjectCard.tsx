@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import * as Haptics from 'expo-haptics';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -109,7 +110,7 @@ export default function ProjectCard({ project, onDeleteProject }: ProjectCardPro
                   {project.pageCount} {project.pageCount === 1 ? 'page' : 'pages'}
                 </Text>
               </View>
-              <MaterialIcons name="chevron-right" size={24} color={theme.textTertiary} />
+              <Icon name="chevron-right" size={24} color={theme.textTertiary} />
             </Pressable>
           </Animated.View>
         </GestureDetector>
@@ -121,7 +122,7 @@ export default function ProjectCard({ project, onDeleteProject }: ProjectCardPro
               style={styles.actionPressable}
               onPress={handleEdit}
             >
-              <MaterialIcons name="edit" size={20} color="white" />
+              <Icon name="edit" size={20} color="white" />
               <Text style={styles.actionText}>Edit</Text>
             </Pressable>
           </View>
@@ -131,7 +132,7 @@ export default function ProjectCard({ project, onDeleteProject }: ProjectCardPro
               style={styles.actionPressable}
               onPress={handleDelete}
             >
-              <MaterialIcons name="delete" size={20} color="white" />
+              <Icon name="delete" size={20} color="white" />
               <Text style={styles.actionText}>Delete</Text>
             </Pressable>
           </View>

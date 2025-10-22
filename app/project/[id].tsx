@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../../components/Icon';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
@@ -162,7 +163,7 @@ export default function ProjectDetailScreen() {
               ]}
               onPress={handleToggleReorderMode}
             >
-              <MaterialIcons 
+              <Icon 
                 name={isReorderMode ? "check" : "reorder"} 
                 size={16} 
                 color={isReorderMode ? "white" : theme.primary} 
@@ -186,7 +187,7 @@ export default function ProjectDetailScreen() {
               onPress={handleBatchProcess}
               disabled={isBatchProcessing || capturedPages.length === 0}
             >
-              <MaterialIcons 
+              <Icon 
                 name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"} 
                 size={16} 
                 color={isBatchProcessing ? "white" : theme.primary} 
@@ -222,7 +223,7 @@ export default function ProjectDetailScreen() {
 
       {isReorderMode && (
         <View style={[styles.instructionBanner, { backgroundColor: theme.secondary }]}>
-          <MaterialIcons name="info-outline" size={16} color={theme.textSecondary} />
+          <Icon name="info-outline" size={16} color={theme.textSecondary} />
           <Text style={[styles.instructionText, { color: theme.textSecondary }]}>
             Press and hold, then drag to reorder pages
           </Text>

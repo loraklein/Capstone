@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import {
@@ -91,14 +92,14 @@ export default function PhotoViewer({ visible, page, onClose, onRotate }: PhotoV
                 onPress={handleRotateLeft}
                 accessibilityLabel="Rotate left"
               >
-                <MaterialIcons name="rotate-left" size={20} color={theme.text} />
+                <Icon name="rotate-left" size={20} color={theme.text} />
               </Pressable>
               <Pressable 
                 style={[styles.rotateButton, { backgroundColor: theme.overlay, marginLeft: 8 }]}
                 onPress={handleRotateRight}
                 accessibilityLabel="Rotate right"
               >
-                <MaterialIcons name="rotate-right" size={20} color={theme.text} />
+                <Icon name="rotate-right" size={20} color={theme.text} />
               </Pressable>
             </View>
             

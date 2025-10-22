@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -24,7 +25,7 @@ export default function EmptyState({ onPress }: EmptyStateProps) {
       accessibilityLabel="Add your first page"
       accessibilityHint="Tap to capture your first document page"
     >
-      <MaterialIcons name="camera-alt" size={80} color={theme.primary} />
+      <Icon name="camera-alt" size={80} color={theme.primary} />
       <Text style={[styles.emptyTitle, { color: theme.text }]}>Ready to Scan</Text>
       <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
         Tap here to capture your first page

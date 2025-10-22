@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -8,7 +9,7 @@ export default function RecentEmptyState() {
 
   return (
     <View style={styles.container}>
-      <MaterialIcons name="history" size={80} color={theme.primary} />
+      <Icon name="history" size={80} color={theme.primary} />
       <Text style={[styles.title, { color: theme.text }]}>No Recent Pages</Text>
       <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
         Start scanning pages to see them here

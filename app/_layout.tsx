@@ -1,6 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme } from 'react-native';
+import { useColorScheme, Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -19,6 +19,29 @@ function StackLayout() {
   const router = useRouter();
   const colorScheme = useColorScheme();
   const [appIsReady, setAppIsReady] = useState(false);
+
+  // Load Material Icons for web from CDN and CSS override
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Load Google Fonts Material Icons
+      const link = document.createElement('link');
+      link.href = 'https://fonts.googleapis.com/icon?family=Material+Icons';
+      link.rel = 'stylesheet';
+      document.head.appendChild(link);
+      
+      // Add CSS to override @expo/vector-icons font loading
+      const style = document.createElement('style');
+      style.textContent = `
+        @font-face {
+          font-family: 'MaterialIcons';
+          font-style: normal;
+          font-weight: 400;
+          src: url(https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }, []);
 
   // Set up API service with auth token provider
   useEffect(() => {

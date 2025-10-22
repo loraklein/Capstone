@@ -11,8 +11,10 @@
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
-        "NSCameraUsageDescription": "This app uses the camera to capture document pages for scanning."
-      }
+        "NSCameraUsageDescription": "This app uses the camera to capture document pages for scanning.",
+        "ITSAppUsesNonExemptEncryption": false
+      },
+      "bundleIdentifier": "com.loraklein.pastforward"
     },
     "android": {
       "adaptiveIcon": {
@@ -20,7 +22,15 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "permissions": ["CAMERA"]
+      "permissions": [
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO",
+        "CAMERA",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.loraklein.pastforward"
     },
     "web": {
       "bundler": "metro",
@@ -47,6 +57,18 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8149a6cd-369b-4055-a026-a04ad31d0100"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/8149a6cd-369b-4055-a026-a04ad31d0100"
     }
   }
 }

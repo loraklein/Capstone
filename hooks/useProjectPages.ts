@@ -14,6 +14,7 @@ export function useProjectPages(projectId: string) {
     try {
       setIsLoading(true);
       const pages = await pageService.getProjectPages(projectId);
+      console.log('Loaded project pages:', pages.map(p => ({ id: p.id, pageNumber: p.pageNumber, idType: typeof p.id })));
       setCapturedPages(pages);
     } catch (error) {
       console.log('Error loading pages:', error);
@@ -101,6 +102,7 @@ export function useProjectPages(projectId: string) {
   // AI processing functions
   const processPageWithAI = async (pageId: string, provider: string = 'google_vision') => {
     try {
+      console.log('Processing page with AI:', { pageId, provider, pageIdType: typeof pageId });
       const result = await pageService.processPageWithAI(pageId, provider);
       
       // Reload pages to get updated AI data

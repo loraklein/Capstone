@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { Image } from 'expo-image';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
@@ -26,12 +27,12 @@ export default function PagePhoto({ page, height = 120 }: PagePhotoProps) {
                   contentFit="cover"
                 />
           <View style={styles.photoOverlay}>
-            <MaterialIcons name="photo" size={24} color="white" />
+            <Icon name="photo" size={24} color="white" />
           </View>
         </View>
       ) : (
         <View style={[styles.photoPlaceholder, { height }]}>
-          <MaterialIcons name="camera-alt" size={32} color={theme.textTertiary} />
+          <Icon name="camera-alt" size={32} color={theme.textTertiary} />
           <Text style={[styles.photoText, { color: theme.textTertiary }]}>No photo</Text>
         </View>
       )}

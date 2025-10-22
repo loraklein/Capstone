@@ -1,7 +1,7 @@
-import { MaterialIcons } from '@expo/vector-icons';
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { useTheme } from '../../contexts/ThemeContext';
+import Icon from '../../components/Icon';
 
 export default function TabLayout() {
   const { theme } = useTheme();
@@ -38,7 +38,7 @@ export default function TabLayout() {
         options={{
           title: 'Projects',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="folder" size={size} color={color} />
+            <Icon name="folder" size={size} color={color} />
           ),
           headerTitle: 'Projects',
         }}
@@ -48,7 +48,7 @@ export default function TabLayout() {
         options={{
           title: 'Recent',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="history" size={size} color={color} />
+            <Icon name="history" size={size} color={color} />
           ),
           headerTitle: 'Recent',
         }}
@@ -58,7 +58,7 @@ export default function TabLayout() {
         options={{
           title: 'Settings',
           tabBarIcon: ({ color, size }) => (
-            <MaterialIcons name="settings" size={size} color={color} />
+            <Icon name="settings" size={size} color={color} />
           ),
         }}
       />

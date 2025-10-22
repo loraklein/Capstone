@@ -77,7 +77,7 @@ class PageService {
       const imageUrl = await supabaseService.uploadImage(
         data.photoUri,
         `page_${Date.now()}.jpg`,
-        '39fcd9b8-7c1b-41b1-8980-931a616ead82' // Temporary test user ID
+        '39fcd9b8-7c1b-41b1-8980-931a616ead82' // TODO: Get actual user ID from auth context
       );
 
       // Create page in backend
@@ -196,6 +196,7 @@ class PageService {
 
   async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
     try {
+      console.log('PageService: Processing page with AI:', { pageId, provider, pageIdType: typeof pageId });
       return await apiService.processPageWithAI(pageId, provider);
     } catch (error) {
       console.log('Error processing page with AI:', error);

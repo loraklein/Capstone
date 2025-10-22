@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -30,7 +31,7 @@ export default function ProjectHeader({
             style={[styles.backButton, { backgroundColor: theme.secondary }]}
             onPress={onBack}
           >
-            <MaterialIcons name="arrow-back" size={24} color={theme.text} />
+            <Icon name="arrow-back" size={24} color={theme.text} />
           </Pressable>
         )}
         <View style={styles.headerContent}>
@@ -45,7 +46,7 @@ export default function ProjectHeader({
       
       <View style={styles.statsRow}>
         <View style={styles.statItem}>
-          <MaterialIcons name="photo-library" size={20} color={theme.primary} />
+          <Icon name="photo-library" size={20} color={theme.primary} />
           <Text style={[styles.statText, { color: theme.textSecondary }]}>
             {pageCount} {pageCount === 1 ? 'page' : 'pages'}
           </Text>
@@ -64,7 +65,7 @@ export default function ProjectHeader({
             ]} 
             onPress={onAddPage}
           >
-            <MaterialIcons name="add" size={20} color="white" />
+            <Icon name="add" size={20} color="white" />
             <Text style={[styles.addButtonText, { color: 'white' }]}>Add Page</Text>
           </Pressable>
         </View>

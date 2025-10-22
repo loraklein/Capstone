@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
@@ -81,7 +82,7 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
           <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>
             <View style={styles.settingInfo}>
-              <MaterialIcons name="person" size={24} color={theme.primary} />
+              <Icon name="person" size={24} color={theme.primary} />
               <View style={styles.settingText}>
                 <Text style={[styles.settingTitle, { color: theme.text }]}>Email</Text>
                 <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
@@ -102,7 +103,7 @@ export default function SettingsScreen() {
             disabled={isSigningOut}
           >
             <View style={styles.settingInfo}>
-              <MaterialIcons name="logout" size={24} color={theme.error} />
+              <Icon name="logout" size={24} color={theme.error} />
               <View style={styles.settingText}>
                 <Text style={[styles.settingTitle, { color: theme.error }]}>Sign Out</Text>
                 <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
@@ -110,7 +111,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-            <MaterialIcons name="chevron-right" size={24} color={theme.textSecondary} />
+            <Icon name="chevron-right" size={24} color={theme.textSecondary} />
           </Pressable>
         </View>
 
@@ -118,7 +119,7 @@ export default function SettingsScreen() {
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Appearance</Text>
           <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>
             <View style={styles.settingInfo}>
-              <MaterialIcons name="palette" size={24} color={theme.primary} />
+              <Icon name="palette" size={24} color={theme.primary} />
               <View style={styles.settingText}>
                 <Text style={[styles.settingTitle, { color: theme.text }]}>Theme</Text>
                 <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
@@ -139,7 +140,7 @@ export default function SettingsScreen() {
               ]}
               onPress={() => handleThemeChange('light')}
             >
-              <MaterialIcons 
+              <Icon 
                 name="light-mode" 
                 size={20} 
                 color={themeMode === 'light' ? theme.primaryText : theme.textSecondary} 
@@ -162,7 +163,7 @@ export default function SettingsScreen() {
               ]}
               onPress={() => handleThemeChange('dark')}
             >
-              <MaterialIcons 
+              <Icon 
                 name="dark-mode" 
                 size={20} 
                 color={themeMode === 'dark' ? theme.primaryText : theme.textSecondary} 
@@ -185,7 +186,7 @@ export default function SettingsScreen() {
               ]}
               onPress={() => handleThemeChange('system')}
             >
-              <MaterialIcons 
+              <Icon 
                 name="settings" 
                 size={20} 
                 color={themeMode === 'system' ? theme.primaryText : theme.textSecondary} 
@@ -214,7 +215,7 @@ export default function SettingsScreen() {
             disabled={isClearing}
           >
             <View style={styles.settingInfo}>
-              <MaterialIcons name="delete-forever" size={24} color={theme.error} />
+              <Icon name="delete-forever" size={24} color={theme.error} />
               <View style={styles.settingText}>
                 <Text style={[styles.settingTitle, { color: theme.error }]}>Clear All Data</Text>
                 <Text style={[styles.settingDescription, { color: theme.textSecondary }]}>
@@ -222,7 +223,7 @@ export default function SettingsScreen() {
                 </Text>
               </View>
             </View>
-            <MaterialIcons name="chevron-right" size={24} color={theme.textSecondary} />
+            <Icon name="chevron-right" size={24} color={theme.textSecondary} />
           </Pressable>
         </View>
       </View>

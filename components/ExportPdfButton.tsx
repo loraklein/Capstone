@@ -2,6 +2,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
+import Icon from './Icon';
 
 interface ExportPdfButtonProps {
   onPress: () => void;
@@ -29,7 +30,7 @@ export default function ExportPdfButton({
       disabled={disabled}
       accessibilityLabel="Export project as PDF"
     >
-      <MaterialIcons 
+      <Icon 
         name={isGenerating ? "hourglass-empty" : "picture-as-pdf"} 
         size={16} 
         color={isGenerating ? theme.textSecondary : theme.primary} 

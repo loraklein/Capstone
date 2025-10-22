@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import { Image } from 'expo-image';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -55,7 +56,7 @@ export default function RecentPageCard({ page, onPress }: RecentPageCardProps) {
             </Text>
           </View>
           
-          <MaterialIcons name="chevron-right" size={24} color={theme.textTertiary} />
+          <Icon name="chevron-right" size={24} color={theme.textTertiary} />
         </Pressable>
       </View>
     </View>

@@ -1,4 +1,5 @@
 import { MaterialIcons } from '@expo/vector-icons';
+import Icon from '../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -64,14 +65,14 @@ export default function DraggablePageCard({
         {!isActive && (
           <View style={styles.controls}>
             <View style={styles.reorderIcon}>
-              <MaterialIcons name="drag-handle" size={24} color={theme.textTertiary} />
+              <Icon name="drag-handle" size={24} color={theme.textTertiary} />
             </View>
           </View>
         )}
         
         {isActive && (
           <View style={styles.dragIndicator}>
-            <MaterialIcons name="drag-handle" size={20} color="white" />
+            <Icon name="drag-handle" size={20} color="white" />
           </View>
         )}
       </View>
