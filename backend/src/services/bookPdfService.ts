@@ -12,6 +12,11 @@ interface BookPdfOptions {
 const DEFAULT_FORMAT: PaperFormat = 'letter';
 
 const launchBrowser = async (): Promise<Browser> => {
+  // Set Puppeteer cache directory for Render
+  if (process.env.NODE_ENV === 'production' && !process.env.PUPPETEER_CACHE_DIR) {
+    process.env.PUPPETEER_CACHE_DIR = '/opt/render/.cache/puppeteer';
+  }
+
   const launchOptions: any = {
     headless: true,
     args: [
@@ -29,27 +34,6 @@ const launchBrowser = async (): Promise<Browser> => {
   // Use Chrome executable path if provided (for Render)
   if (process.env.CHROME_EXECUTABLE_PATH) {
     launchOptions.executablePath = process.env.CHROME_EXECUTABLE_PATH;
-  } else if (process.env.NODE_ENV === 'production') {
-    // Try to use system Chrome/Chromium in production
-    // Render may have Chrome installed at a standard location
-    const possiblePaths = [
-      '/usr/bin/chromium',
-      '/usr/bin/chromium-browser',
-      '/usr/bin/google-chrome',
-      '/usr/bin/google-chrome-stable',
-    ];
-    
-    // Try to find Chrome
-    for (const path of possiblePaths) {
-      try {
-        const { execSync } = require('child_process');
-        execSync(`test -f ${path}`, { stdio: 'ignore' });
-        launchOptions.executablePath = path;
-        break;
-      } catch {
-        // Path doesn't exist, try next
-      }
-    }
   }
 
   return puppeteer.launch(launchOptions);
