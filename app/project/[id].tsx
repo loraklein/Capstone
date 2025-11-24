@@ -47,7 +47,7 @@ export default function ProjectDetailScreen() {
 
   const { capturedPages, addPage, deletePage, reorderPagesWithArray, updatePageRotation, processPageWithAI, batchProcessProject, reloadPages } = useProjectPages(projectId);
   const { refreshProjects } = useProjects();
-  const { isGenerating, generatePdf } = usePdfGeneration();
+  const { isGenerating, generatePdf } = usePdfGeneration(projectId);
   const { showCamera, handleAddPage, handleCameraCapture, handleCameraClose } = useCameraManagement({ addPage });
   const { showPhotoViewer, selectedPage, handleViewPage, handleClosePhotoViewer } = usePhotoViewer();
   const { showDeleteModal, handleDeletePage, confirmDelete, cancelDelete } = useDeleteConfirmation({ deletePage, refreshProjects });
@@ -308,10 +308,15 @@ export default function ProjectDetailScreen() {
         confirmStyle="destructive"
       />
 
-      {editingPage && (
+      {editingPage && editingPage.photo_url && (
         <LineByLineTextEditor
           visible={showTextEditor}
-          page={editingPage}
+          page={{
+            id: editingPage.id,
+            photo_url: editingPage.photo_url,
+            extracted_text: editingPage.extracted_text || '',
+            edited_text: editingPage.edited_text,
+          }}
           onClose={handleCloseTextEditor}
           onSave={handleSaveEditedText}
         />
@@ -331,9 +336,10 @@ const styles = StyleSheet.create({
   },
   buttonRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 12,
+    flexWrap: 'wrap',
   },
   reorderButton: {
     flexDirection: 'row',

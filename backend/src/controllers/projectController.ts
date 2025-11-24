@@ -1,6 +1,9 @@
 import { Request, Response } from 'express';
 import { supabase } from '../config/database';
 import { storageService } from '../services/storageService';
+import { BookExportError, buildBookExport } from '../services/bookExportService';
+import { renderBookHtml } from '../services/bookHtmlService';
+import { generateBookPdf } from '../services/bookPdfService';
 
 export const createProject = async (req: Request, res: Response) => {
   try {
@@ -215,5 +218,85 @@ export const deleteProject = async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error in deleteProject:', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+export const exportProjectBook = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const exportPayload = await buildBookExport(id, userId);
+
+    res.json(exportPayload);
+  } catch (error) {
+    if (error instanceof BookExportError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    console.error('Error in exportProjectBook:', error);
+    res.status(500).json({ error: 'Failed to build book export' });
+  }
+};
+
+export const exportProjectBookHtml = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const includeImages = req.query.includeImages === 'true';
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const payload = await buildBookExport(id, userId);
+    const html = renderBookHtml(payload, { includeImages });
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.send(html);
+  } catch (error) {
+    if (error instanceof BookExportError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    console.error('Error in exportProjectBookHtml:', error);
+    res.status(500).json({ error: 'Failed to render book HTML' });
+  }
+};
+
+export const exportProjectBookPdf = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user?.id;
+    const includeImages = req.query.includeImages === 'true';
+    const formatParam = req.query.format as string | undefined;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    const payload = await buildBookExport(id, userId);
+    const pdfBuffer = await generateBookPdf(payload, {
+      includeImages,
+      format: formatParam ? (formatParam.toLowerCase() as any) : undefined,
+    });
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${payload.project.title.replace(/\s+/g, '_')}_book.pdf"`
+    );
+    res.send(pdfBuffer);
+  } catch (error) {
+    if (error instanceof BookExportError) {
+      return res.status(error.status).json({ error: error.message });
+    }
+
+    console.error('Error in exportProjectBookPdf:', error);
+    res.status(500).json({ error: 'Failed to generate book PDF' });
   }
 };

@@ -21,8 +21,6 @@ export class SupabaseService {
       const fileExtension = fileName.split('.').pop() || 'jpg';
       const uniqueFileName = `${userId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
 
-      console.log('Uploading image:', { imageUri, fileName, userId, uniqueFileName });
-
       // Create FormData for React Native
       const formData = new FormData();
       formData.append('file', {
@@ -48,8 +46,6 @@ export class SupabaseService {
 
       // Get public URL
       const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${this.bucketName}/${uniqueFileName}`;
-      
-      console.log('Upload successful, public URL:', publicUrl);
       return publicUrl;
     } catch (error) {
       console.error('Error uploading image to Supabase:', error);

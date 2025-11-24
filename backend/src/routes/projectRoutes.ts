@@ -4,7 +4,10 @@ import {
   getProjects,
   getProjectById,
   updateProject,
-  deleteProject
+  deleteProject,
+  exportProjectBook,
+  exportProjectBookHtml,
+  exportProjectBookPdf,
 } from '../controllers/projectController';
 
 const router = Router();
@@ -13,6 +16,9 @@ const router = Router();
 router.post('/', createProject);
 router.get('/', getProjects);
 router.get('/:id', getProjectById);
+router.get('/:id/export/book', exportProjectBook);
+router.get('/:id/export/book/html', exportProjectBookHtml);
+router.get('/:id/export/book/pdf', exportProjectBookPdf);
 router.put('/:id', updateProject);
 router.delete('/:id', deleteProject);
 

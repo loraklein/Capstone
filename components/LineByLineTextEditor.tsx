@@ -28,7 +28,7 @@ interface LineByLineTextEditorProps {
   visible: boolean;
   page: {
     id: string;
-    photo_url: string;
+    photo_url?: string;
     extracted_text: string;
     edited_text?: string;
   };

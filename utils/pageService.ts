@@ -74,13 +74,16 @@ class PageService {
     }
   }
 
-  async addPage(projectId: string, data: AddPageData): Promise<CapturedPage> {
+  async addPage(projectId: string, data: AddPageData, userId: string): Promise<CapturedPage> {
     try {
+      if (!userId) {
+        throw new Error('User ID is required to add a page');
+      }
       // Upload image to Supabase Storage
       const imageUrl = await supabaseService.uploadImage(
         data.photoUri,
         `page_${Date.now()}.jpg`,
-        '39fcd9b8-7c1b-41b1-8980-931a616ead82' // TODO: Get actual user ID from auth context
+        userId
       );
 
       // Create page in backend

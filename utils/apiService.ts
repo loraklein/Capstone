@@ -1,13 +1,39 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
-// Backend API configuration
-// Production: Uses Render deployment
-// Local dev: Use local backend
-const API_BASE_URL = 
-  Constants.expoConfig?.extra?.apiUrl || 
-  process.env.EXPO_PUBLIC_API_URL || 
-  (typeof window !== 'undefined' ? 'https://capstone-backend-og2c.onrender.com/api' : 'http://localhost:3001/api');
+const resolveDevBaseUrl = () => {
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    (Constants as any)?.manifest?.hostUri ||
+    (Constants as any)?.manifest2?.extra?.expoClient?.hostUri;
+
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    if (host) {
+      return `http://${host}:3001/api`;
+    }
+  }
+  return 'http://localhost:3001/api';
+};
+
+const resolveBaseUrl = () => {
+  const explicit =
+    Constants.expoConfig?.extra?.apiUrl ||
+    process.env.EXPO_PUBLIC_API_URL ||
+    (typeof process !== 'undefined' && process.env?.API_BASE_URL);
+
+  if (explicit) {
+    return explicit;
+  }
+
+  if (__DEV__) {
+    return resolveDevBaseUrl();
+  }
+
+  return 'https://capstone-backend-og2c.onrender.com/api';
+};
+
+const API_BASE_URL = resolveBaseUrl();
 
 // API service for backend communication
 export class ApiService {
@@ -16,6 +42,10 @@ export class ApiService {
 
   constructor(baseURL: string = API_BASE_URL) {
     this.baseURL = baseURL;
+  }
+
+  getBaseURL(): string {
+    return this.baseURL;
   }
 
   // Set the access token provider function

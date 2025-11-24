@@ -95,12 +95,6 @@ export function groupWordsIntoLines(annotations: WordAnnotation[]): TextLine[] {
     lines.push(createTextLine(currentLine, lines.length));
   }
 
-  console.log('DEBUG line detection:', {
-    totalWords: annotations.length,
-    detectedLines: lines.length,
-    avgWordsPerLine: (annotations.length / lines.length).toFixed(1)
-  });
-
   return lines;
 }
 

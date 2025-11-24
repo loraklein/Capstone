@@ -39,6 +39,11 @@ A React Native mobile application built with Expo that allows users to create pr
 - **Improved UI and User Flow**: Enhanced visual design and streamlined user experience throughout the app
 - **Drag & Drop Page Reordering**: Long-press and drag pages to reorder them within projects for better document organization
 - **Code Architecture**: Refactored with custom hooks for better performance and maintainability.
+- **OCR Text Extraction**: Google Vision API integration for automatic text recognition from handwritten documents
+- **PDF Export**: Export complete projects as formatted PDF books with extracted text
+- **Authentication**: Secure user authentication with Supabase Auth and JWT tokens
+- **Cloud Storage**: Images stored securely in Supabase Storage with user isolation
+- **Line-by-Line Text Editing**: Edit extracted text line by line for accuracy
 
 ## Expo Packages Used
 
@@ -80,10 +85,10 @@ A React Native mobile application built with Expo that allows users to create pr
 
 
 ## Future Enhancements
-- Image processing and text recognition (OCR)
-- Cloud storage integration
 - Project sharing capabilities
-- Export options
+- Multi-language OCR support
+- Advanced text editing features
+- Batch export options
 
 ## Development Notes
 

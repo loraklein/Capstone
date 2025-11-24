@@ -10,8 +10,8 @@ interface UsePdfExportProps {
 }
 
 export function usePdfExport({ projectName, description, capturedPages, generatePdf }: UsePdfExportProps) {
-  const hasPagesWithPhotos = useMemo(() => {
-    return capturedPages.some(page => page.photoUri);
+  const hasContentToExport = useMemo(() => {
+    return capturedPages.length > 0;
   }, [capturedPages]);
 
   const handleExportPdf = async () => {
@@ -24,7 +24,7 @@ export function usePdfExport({ projectName, description, capturedPages, generate
   };
 
   return {
-    hasPagesWithPhotos,
+    hasPagesWithPhotos: hasContentToExport,
     handleExportPdf,
   };
 } 

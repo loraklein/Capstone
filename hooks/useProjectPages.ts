@@ -4,12 +4,14 @@ import * as Haptics from 'expo-haptics';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 import { CapturedPage } from '../types';
+import { useAuth } from '../contexts/AuthContext';
 import { projectService } from '../utils/projectService';
 import { pageService } from '../utils/pageService';
 
 export function useProjectPages(projectId: string) {
   const [capturedPages, setCapturedPages] = useState<CapturedPage[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   const loadProjectPages = async () => {
     try {
@@ -55,7 +57,10 @@ export function useProjectPages(projectId: string) {
 
   const addPage = async (photoUri: string) => {
     try {
-      const newPage = await pageService.addPage(projectId, { photoUri });
+      if (!user?.id) {
+        throw new Error('User must be signed in to add pages');
+      }
+      const newPage = await pageService.addPage(projectId, { photoUri }, user.id);
       
       const updatedPages = [...capturedPages, newPage];
       setCapturedPages(updatedPages);

@@ -79,8 +79,6 @@ export const addPage = async (req: Request, res: Response) => {
     const { photoUrl, rotation = 0 } = req.body;
     const userId = req.user?.id;
 
-    console.log('Adding page:', { projectId, photoUrl, rotation, userId });
-
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
@@ -103,12 +101,8 @@ export const addPage = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Project not found' });
     }
 
-    console.log('Project found:', project);
-
     // Get the next page number
     const pageNumber = project.page_count + 1;
-
-    console.log('Creating page with number:', pageNumber);
 
     // Insert the new page
     const { data, error } = await supabase
@@ -128,8 +122,6 @@ export const addPage = async (req: Request, res: Response) => {
       console.error('Error adding page:', error);
       return res.status(500).json({ error: 'Failed to add page', details: error.message });
     }
-
-    console.log('Page created successfully:', data);
 
     // Update the project's page count
     const { error: updateError } = await supabase
@@ -230,7 +222,6 @@ export const deletePage = async (req: Request, res: Response) => {
     if (page.photo_url) {
       try {
         await storageService.deleteImage(page.photo_url);
-        console.log('Deleted image from storage:', page.photo_url);
       } catch (storageError) {
         console.error('Error deleting image from storage:', storageError);
         // Don't fail the request if storage deletion fails, but log it

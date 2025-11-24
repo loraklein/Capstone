@@ -33,14 +33,6 @@ export class OllamaProvider implements AIProvider {
       // Convert image URL to base64
       const imageBase64 = await this.convertImageToBase64(imageUrl);
       
-      // Debug: Log what we're sending to Ollama
-      console.log('Sending to Ollama:', {
-        host: this.host,
-        model: this.model,
-        imageBase64Length: imageBase64.length,
-        imageBase64Preview: imageBase64.substring(0, 50) + '...',
-        imageUrl: imageUrl
-      });
 
       // Try the chat API endpoint which is better for vision models
       const response = await fetch(`${this.host}/api/chat`, {
@@ -68,17 +60,8 @@ export class OllamaProvider implements AIProvider {
       const result = await response.json() as any;
       const processingTime = Date.now() - startTime;
 
-      // Debug: Log the full response from Ollama
-      console.log('Ollama response:', {
-        fullResponse: result,
-        messageContent: result.message?.content,
-        response: result.response
-      });
-
       // Parse the response text to extract JSON if needed
       let extractedText = result.message?.content || result.response || '';
-
-      console.log('Raw extracted text before parsing:', extractedText);
 
       // Try to parse JSON response
       try {
@@ -92,22 +75,14 @@ export class OllamaProvider implements AIProvider {
           
           const jsonResponse = JSON.parse(jsonText);
           extractedText = jsonResponse.text || extractedText;
-          console.log('Parsed JSON response:', jsonResponse);
         }
       } catch (parseError) {
-        console.log('Could not parse JSON response, trying to extract text manually:', parseError);
-        
         // Try to extract text content manually if JSON parsing fails
         const textMatch = extractedText.match(/"text":\s*"([^"]*(?:\\.[^"]*)*)"/);
         if (textMatch) {
           extractedText = textMatch[1].replace(/\\n/g, '\n').replace(/\\"/g, '"');
-          console.log('Manually extracted text:', extractedText);
-        } else {
-          console.log('Could not extract text manually, using raw response');
         }
       }
-
-      console.log('Final extracted text:', extractedText);
 
       // Check if the response is a description rather than transcription
       const isDescription = extractedText.toLowerCase().includes('the image shows') || 
@@ -117,7 +92,6 @@ export class OllamaProvider implements AIProvider {
                            extractedText.toLowerCase().includes('overall, the image');
 
       if (isDescription) {
-        console.log('Detected description response instead of transcription, trying alternative prompt');
         
         // Try a more direct approach
         try {
@@ -144,18 +118,14 @@ export class OllamaProvider implements AIProvider {
             const altText = altResult.message?.content || altResult.response || '';
             
             if (altText && !altText.toLowerCase().includes('the image')) {
-              console.log('Alternative prompt successful:', altText);
               extractedText = altText;
             } else {
-              console.log('Alternative prompt also failed, using fallback message');
               extractedText = 'No readable text found - AI provided image description instead of text transcription';
             }
           } else {
-            console.log('Alternative prompt request failed, using fallback message');
             extractedText = 'No readable text found - AI provided image description instead of text transcription';
           }
         } catch (altError) {
-          console.log('Alternative prompt error:', altError);
           extractedText = 'No readable text found - AI provided image description instead of text transcription';
         }
       }
@@ -287,11 +257,6 @@ export class GoogleVisionProvider implements AIProvider {
       const result = await response.json() as GoogleVisionResponse;
       const processingTime = Date.now() - startTime;
 
-      console.log('Google Vision response:', {
-        hasTextAnnotations: !!result.responses?.[0]?.textAnnotations,
-        annotationCount: result.responses?.[0]?.textAnnotations?.length || 0
-      });
-
       // Extract text from response
       // The first annotation contains all the text, subsequent ones are individual words
       const textAnnotations = result.responses?.[0]?.textAnnotations;
@@ -312,8 +277,6 @@ export class GoogleVisionProvider implements AIProvider {
       // We'll estimate based on whether text was found
       const confidence = extractedText.length > 0 ? 0.95 : 0;
 
-      console.log('Extracted text:', extractedText.substring(0, 100) + '...');
-
       // Store all annotations (skipping first one which is the full text)
       // Index 0 = full text, Index 1+ = individual words with bounding boxes
       const wordAnnotations = textAnnotations.slice(1);
@@ -333,19 +296,9 @@ export class GoogleVisionProvider implements AIProvider {
 
   private async convertImageToBase64(imageUrl: string): Promise<string> {
     try {
-      console.log('Converting image to base64:', imageUrl);
-      
       // Use the storage service to get image buffer
       const imageBuffer = await storageService.getImageBuffer(imageUrl);
-      
-      console.log('Image buffer details:', {
-        bufferSize: imageBuffer.length,
-        bufferType: typeof imageBuffer
-      });
-      
       const base64 = imageBuffer.toString('base64');
-      console.log('Base64 conversion successful, length:', base64.length);
-      
       return base64;
     } catch (error) {
       console.error('Error converting image to base64:', error);
