@@ -12,13 +12,45 @@ interface BookPdfOptions {
 const DEFAULT_FORMAT: PaperFormat = 'letter';
 
 const launchBrowser = async (): Promise<Browser> => {
-  const launchOptions = {
-    headless: true as const,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    ...(process.env.CHROME_EXECUTABLE_PATH && {
-      executablePath: process.env.CHROME_EXECUTABLE_PATH,
-    }),
+  const launchOptions: any = {
+    headless: true,
+    args: [
+      '--no-sandbox',
+      '--disable-setuid-sandbox',
+      '--disable-dev-shm-usage',
+      '--disable-accelerated-2d-canvas',
+      '--no-first-run',
+      '--no-zygote',
+      '--single-process', // May help on Render
+      '--disable-gpu',
+    ],
   };
+
+  // Use Chrome executable path if provided (for Render)
+  if (process.env.CHROME_EXECUTABLE_PATH) {
+    launchOptions.executablePath = process.env.CHROME_EXECUTABLE_PATH;
+  } else if (process.env.NODE_ENV === 'production') {
+    // Try to use system Chrome/Chromium in production
+    // Render may have Chrome installed at a standard location
+    const possiblePaths = [
+      '/usr/bin/chromium',
+      '/usr/bin/chromium-browser',
+      '/usr/bin/google-chrome',
+      '/usr/bin/google-chrome-stable',
+    ];
+    
+    // Try to find Chrome
+    for (const path of possiblePaths) {
+      try {
+        const { execSync } = require('child_process');
+        execSync(`test -f ${path}`, { stdio: 'ignore' });
+        launchOptions.executablePath = path;
+        break;
+      } catch {
+        // Path doesn't exist, try next
+      }
+    }
+  }
 
   return puppeteer.launch(launchOptions);
 };
@@ -29,10 +61,15 @@ export async function generateBookPdf(
 ): Promise<Buffer> {
   const html = renderBookHtml(payload, { includeImages: options.includeImages });
 
-  const browser = await launchBrowser();
+  let browser: Browser | null = null;
   try {
+    browser = await launchBrowser();
     const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    
+    // Set a longer timeout for page operations
+    page.setDefaultTimeout(30000);
+    
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
 
     const pdfUint8Array = await page.pdf({
       format: options.format ?? DEFAULT_FORMAT,
@@ -44,12 +81,20 @@ export async function generateBookPdf(
         left: '0.65in',
         right: '0.65in',
       },
+      timeout: 30000,
     });
 
     await page.close();
     return Buffer.from(pdfUint8Array);
+  } catch (error) {
+    console.error('PDF generation error:', error);
+    throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
   } finally {
-    await browser.close();
+    if (browser) {
+      await browser.close().catch(err => {
+        console.error('Error closing browser:', err);
+      });
+    }
   }
 }
 

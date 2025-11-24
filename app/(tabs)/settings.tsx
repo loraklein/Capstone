@@ -7,6 +7,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useProjects } from '../../hooks/useProjects';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'expo-router';
+import { apiService } from '@/utils/apiService';
 
 export default function SettingsScreen() {
   const { theme, themeMode, setThemeMode } = useTheme();
@@ -95,6 +96,9 @@ export default function SettingsScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <View style={styles.section}>
+          <Text style={{ padding: 20, fontSize: 12 }}>
+            Backend: {apiService.getBaseURL()}
+          </Text>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
           <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>
             <View style={styles.settingInfo}>

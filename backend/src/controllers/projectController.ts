@@ -297,6 +297,14 @@ export const exportProjectBookPdf = async (req: Request, res: Response) => {
     }
 
     console.error('Error in exportProjectBookPdf:', error);
-    res.status(500).json({ error: 'Failed to generate book PDF' });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    
+    console.error('PDF export error details:', errorDetails);
+    
+    res.status(500).json({ 
+      error: 'Failed to generate book PDF',
+      details: process.env.NODE_ENV === 'production' ? undefined : errorMessage
+    });
   }
 };
