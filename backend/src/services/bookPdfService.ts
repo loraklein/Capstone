@@ -34,6 +34,37 @@ const launchBrowser = async (): Promise<Browser> => {
   // Use Chrome executable path if provided (for Render)
   if (process.env.CHROME_EXECUTABLE_PATH) {
     launchOptions.executablePath = process.env.CHROME_EXECUTABLE_PATH;
+  } else if (process.env.NODE_ENV === 'production') {
+    // Try to find Chrome in the Puppeteer cache directory
+    const fs = require('fs');
+    const path = require('path');
+    
+    const cacheDir = process.env.PUPPETEER_CACHE_DIR || '/opt/render/.cache/puppeteer';
+    const chromePath = path.join(cacheDir, 'chrome', 'linux-131.0.6778.204', 'chrome-linux64', 'chrome');
+    
+    // Check if Chrome exists at the expected path
+    try {
+      if (fs.existsSync(chromePath)) {
+        launchOptions.executablePath = chromePath;
+        console.log('Using Chrome from:', chromePath);
+      } else {
+        // Try to find any Chrome version in the cache
+        const chromeDir = path.join(cacheDir, 'chrome');
+        if (fs.existsSync(chromeDir)) {
+          const versions = fs.readdirSync(chromeDir);
+          if (versions.length > 0) {
+            const versionDir = versions[0]; // Use first available version
+            const potentialChrome = path.join(chromeDir, versionDir, 'chrome-linux64', 'chrome');
+            if (fs.existsSync(potentialChrome)) {
+              launchOptions.executablePath = potentialChrome;
+              console.log('Using Chrome from:', potentialChrome);
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error finding Chrome:', error);
+    }
   }
 
   return puppeteer.launch(launchOptions);
