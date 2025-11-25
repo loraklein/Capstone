@@ -99,6 +99,18 @@ export default function ProjectDetailScreen() {
     setEditingPage(null);
   };
 
+  const handleViewCombinedText = () => {
+    router.push({
+      pathname: '/project/combined-text' as any,
+      params: {
+        id: projectId,
+        name: projectName,
+      },
+    });
+  };
+
+  const hasPagesWithText = capturedPages.some(page => page.edited_text || page.extracted_text);
+
   useCameraOrientation(showCamera);
 
   const flatListRef = useRef<FlatList>(null);
@@ -153,31 +165,32 @@ export default function ProjectDetailScreen() {
 
       {capturedPages.length > 1 && (
         <View style={[styles.reorderSection, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+          {/* Row 1: Editing Actions */}
           <View style={styles.buttonRow}>
-            <Pressable 
+            <Pressable
               style={[
                 styles.reorderButton,
                 { backgroundColor: isReorderMode ? theme.primary : 'transparent' }
               ]}
               onPress={handleToggleReorderMode}
             >
-              <Icon 
-                name={isReorderMode ? "check" : "reorder"} 
-                size={16} 
-                color={isReorderMode ? "white" : theme.primary} 
+              <Icon
+                name={isReorderMode ? "check" : "reorder"}
+                size={16}
+                color={isReorderMode ? "white" : theme.primary}
               />
               <Text style={[
-                styles.reorderButtonText, 
+                styles.reorderButtonText,
                 { color: isReorderMode ? "white" : theme.primary }
               ]}>
-                {isReorderMode ? "Done" : "Reorder Pages"}
+                {isReorderMode ? "Done" : "Reorder"}
               </Text>
             </Pressable>
 
-            <Pressable 
+            <Pressable
               style={[
                 styles.reorderButton,
-                { 
+                {
                   backgroundColor: isBatchProcessing ? theme.primary : 'transparent',
                   opacity: isBatchProcessing ? 0.6 : 1
                 }
@@ -185,27 +198,54 @@ export default function ProjectDetailScreen() {
               onPress={handleBatchProcess}
               disabled={isBatchProcessing || capturedPages.length === 0}
             >
-              <Icon 
-                name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"} 
-                size={16} 
-                color={isBatchProcessing ? "white" : theme.primary} 
+              <Icon
+                name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"}
+                size={16}
+                color={isBatchProcessing ? "white" : theme.primary}
               />
               <Text style={[
                 styles.reorderButtonText,
                 { color: isBatchProcessing ? "white" : theme.primary }
               ]}>
-                {isBatchProcessing ? 'Processing...' : 'Process All Pages'}
+                {isBatchProcessing ? 'Processing...' : 'Process All'}
               </Text>
             </Pressable>
-
-            {hasPagesWithPhotos && (
-              <ExportPdfButton
-                onPress={handleExportPdf}
-                disabled={isGenerating}
-                isGenerating={isGenerating}
-              />
-            )}
           </View>
+
+          {/* Row 2: View/Export Actions */}
+          {(hasPagesWithText || hasPagesWithPhotos) && (
+            <View style={[styles.buttonRow, { marginTop: 8 }]}>
+              {hasPagesWithText && (
+                <Pressable
+                  style={[
+                    styles.reorderButton,
+                    { backgroundColor: 'transparent' }
+                  ]}
+                  onPress={handleViewCombinedText}
+                >
+                  <Icon
+                    name="description"
+                    size={16}
+                    color={theme.primary}
+                  />
+                  <Text style={[
+                    styles.reorderButtonText,
+                    { color: theme.primary }
+                  ]}>
+                    View All Text
+                  </Text>
+                </Pressable>
+              )}
+
+              {hasPagesWithPhotos && (
+                <ExportPdfButton
+                  onPress={handleExportPdf}
+                  disabled={isGenerating}
+                  isGenerating={isGenerating}
+                />
+              )}
+            </View>
+          )}
         </View>
       )}
 
@@ -337,7 +377,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 12,
-    flexWrap: 'wrap',
   },
   reorderButton: {
     flexDirection: 'row',
