@@ -15,6 +15,7 @@ import EmptyState from '../../components/EmptyState';
 import ExportPdfButton from '../../components/ExportPdfButton';
 import LineByLineTextEditor from '../../components/LineByLineTextEditor';
 import PageCard from '../../components/PageCard';
+import PhotoSourceSelector from '../../components/PhotoSourceSelector';
 import PhotoViewer from '../../components/PhotoViewer';
 import ProjectHeader from '../../components/ProjectHeader';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -96,10 +97,6 @@ export default function ProjectDetailScreen() {
     setEditingPage(null);
   };
 
-  const handleBack = () => {
-    router.back();
-  };
-
   useCameraOrientation(showCamera);
 
   const flatListRef = useRef<FlatList>(null);
@@ -150,7 +147,6 @@ export default function ProjectDetailScreen() {
         pageCount={capturedPages.length}
         showAddButton={capturedPages.length > 0 && !isReorderMode}
         onAddPage={handleAddPage}
-        onBack={handleBack}
       />
 
       {capturedPages.length > 1 && (
@@ -284,7 +280,7 @@ export default function ProjectDetailScreen() {
 
 
 
-      <CameraCapture
+      <PhotoSourceSelector
         visible={showCamera}
         onCapture={handleCameraCapture}
         onClose={handleCameraClose}
