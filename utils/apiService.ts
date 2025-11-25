@@ -56,7 +56,7 @@ export class ApiService {
   // Helper method to make API requests
   private async makeRequest(endpoint: string, options: RequestInit = {}): Promise<any> {
     const url = `${this.baseURL}${endpoint}`;
-    
+
     const defaultHeaders: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -67,6 +67,8 @@ export class ApiService {
       defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
     }
 
+    console.log('[apiService] Making request to:', url, 'method:', options.method || 'GET');
+
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -75,11 +77,17 @@ export class ApiService {
       },
     });
 
+    console.log('[apiService] Response status:', response.status, response.statusText);
+
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      const errorText = await response.text();
+      console.error('[apiService] Error response:', errorText);
+      throw new Error(`API request failed: ${response.status} ${response.statusText} - ${errorText}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    console.log('[apiService] Response data:', data);
+    return data;
   }
 
   // Project management

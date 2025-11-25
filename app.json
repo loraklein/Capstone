@@ -62,8 +62,7 @@
       "router": {},
       "eas": {
         "projectId": "8149a6cd-369b-4055-a026-a04ad31d0100"
-      },
-      "apiUrl": "https://capstone-backend-og2c.onrender.com/api"
+      }
     },
     "runtimeVersion": {
       "policy": "appVersion"

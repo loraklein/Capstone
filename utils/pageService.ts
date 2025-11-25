@@ -202,9 +202,16 @@ class PageService {
 
   async processPageWithAI(pageId: string, provider: string = 'google_vision'): Promise<any> {
     try {
-      return await apiService.processPageWithAI(pageId, provider);
+      console.log('[pageService] Processing page with AI:', pageId, 'provider:', provider);
+      const result = await apiService.processPageWithAI(pageId, provider);
+      console.log('[pageService] AI processing result:', result);
+      return result;
     } catch (error) {
-      console.log('Error processing page with AI:', error);
+      console.error('[pageService] Error processing page with AI:', error);
+      if (error instanceof Error) {
+        console.error('[pageService] Error message:', error.message);
+        console.error('[pageService] Error stack:', error.stack);
+      }
       throw error;
     }
   }

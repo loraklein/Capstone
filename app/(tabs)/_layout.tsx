@@ -1,10 +1,12 @@
 import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import Icon from '../../components/Icon';
 
 export default function TabLayout() {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
@@ -15,10 +17,19 @@ export default function TabLayout() {
           backgroundColor: theme.surface,
           borderTopColor: theme.divider,
           borderTopWidth: 1,
-          height: Platform.OS === 'web' ? 60 : 50, // Taller on web for visibility
+          height: Platform.OS === 'web' 
+            ? 60 
+            : 49 + insets.bottom, // Base height + safe area bottom padding
+          paddingBottom: Platform.OS === 'ios' ? insets.bottom : 4,
+          paddingTop: 4,
         },
         tabBarLabelStyle: {
-          fontSize: Platform.OS === 'web' ? 14 : 12, // Larger text on web
+          fontSize: Platform.OS === 'web' ? 14 : 11,
+          marginTop: -2, // Bring label closer to icon
+          marginBottom: Platform.OS === 'ios' ? 0 : 2,
+        },
+        tabBarIconStyle: {
+          marginTop: 4, // Add small margin above icon
         },
         headerStyle: {
           backgroundColor: theme.surface,

@@ -44,17 +44,15 @@ export default function ProjectHeader({
         </View>
       </View>
       
-      <View style={styles.statsRow}>
+      <View style={styles.actionsRow}>
         <View style={styles.statItem}>
           <Icon name="photo-library" size={20} color={theme.primary} />
           <Text style={[styles.statText, { color: theme.textSecondary }]}>
             {pageCount} {pageCount === 1 ? 'page' : 'pages'}
           </Text>
         </View>
-      </View>
-      
-      {showAddButton && onAddPage && (
-        <View style={styles.addButtonContainer}>
+        
+        {showAddButton && onAddPage && (
           <Pressable 
             style={({ pressed }) => [
               styles.addButton, 
@@ -68,8 +66,8 @@ export default function ProjectHeader({
             <Icon name="add" size={20} color="white" />
             <Text style={[styles.addButtonText, { color: 'white' }]}>Add Page</Text>
           </Pressable>
-        </View>
-      )}
+        )}
+      </View>
     </View>
   );
 }
@@ -84,7 +82,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: 16,
+    marginBottom: 8,
     gap: 12,
   },
   backButton: {
@@ -104,12 +102,14 @@ const styles = StyleSheet.create({
   },
   projectDescription: {
     fontSize: 16,
-    marginBottom: 16,
+    marginBottom: 0,
     lineHeight: 22,
   },
-  statsRow: {
+  actionsRow: {
     flexDirection: 'row',
-    gap: 24,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 0,
   },
   statItem: {
     flexDirection: 'row',
@@ -119,11 +119,6 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  addButtonContainer: {
-    position: 'absolute',
-    bottom: 20,
-    right: 20,
   },
   addButton: {
     flexDirection: 'row',

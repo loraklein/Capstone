@@ -163,6 +163,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
     justifyContent: 'center',
+    ...(Platform.OS === 'web' && {
+      maxWidth: 400,
+      width: '100%',
+      alignSelf: 'center',
+    }),
   },
   divider: {
     height: 40,

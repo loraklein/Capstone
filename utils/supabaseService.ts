@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 
 // Supabase configuration
 const SUPABASE_URL = 'https://bhoodtyyzsywvbxoanjg.supabase.co';
@@ -21,32 +22,62 @@ export class SupabaseService {
       const fileExtension = fileName.split('.').pop() || 'jpg';
       const uniqueFileName = `${userId}/${Date.now()}_${Math.random().toString(36).substr(2, 9)}.${fileExtension}`;
 
-      // Create FormData for React Native
-      const formData = new FormData();
-      formData.append('file', {
-        uri: imageUri,
-        type: `image/${fileExtension}`,
-        name: uniqueFileName,
-      } as any);
+      let fileBlob: Blob | File;
 
-      // Upload using REST API with proper headers
-      const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${this.bucketName}/${uniqueFileName}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-        },
-        body: formData,
-      });
+      // Handle web platform differently
+      if (Platform.OS === 'web') {
+        // On web, imageUri is a blob URL or data URL
+        if (imageUri.startsWith('blob:') || imageUri.startsWith('data:')) {
+          const response = await fetch(imageUri);
+          fileBlob = await response.blob();
+        } else {
+          throw new Error('Invalid image URI for web upload');
+        }
 
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Upload response error:', response.status, errorText);
-        throw new Error(`Supabase Storage upload failed: ${response.status} ${errorText}`);
+        // Upload using Supabase client on web (better compatibility)
+        const { data, error } = await supabase.storage
+          .from(this.bucketName)
+          .upload(uniqueFileName, fileBlob, {
+            contentType: `image/${fileExtension}`,
+            upsert: false,
+          });
+
+        if (error) {
+          console.error('Upload error:', error);
+          throw new Error(`Supabase Storage upload failed: ${error.message}`);
+        }
+
+        // Get public URL
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${this.bucketName}/${uniqueFileName}`;
+        return publicUrl;
+      } else {
+        // React Native mobile upload
+        const formData = new FormData();
+        formData.append('file', {
+          uri: imageUri,
+          type: `image/${fileExtension}`,
+          name: uniqueFileName,
+        } as any);
+
+        // Upload using REST API with proper headers
+        const response = await fetch(`${SUPABASE_URL}/storage/v1/object/${this.bucketName}/${uniqueFileName}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error('Upload response error:', response.status, errorText);
+          throw new Error(`Supabase Storage upload failed: ${response.status} ${errorText}`);
+        }
+
+        // Get public URL
+        const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${this.bucketName}/${uniqueFileName}`;
+        return publicUrl;
       }
-
-      // Get public URL
-      const publicUrl = `${SUPABASE_URL}/storage/v1/object/public/${this.bucketName}/${uniqueFileName}`;
-      return publicUrl;
     } catch (error) {
       console.error('Error uploading image to Supabase:', error);
       throw error;

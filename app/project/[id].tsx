@@ -60,10 +60,12 @@ export default function ProjectDetailScreen() {
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
-    
+
     setIsBatchProcessing(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
       console.log('Starting batch processing for project:', projectId);
       await batchProcessProject();
       console.log('Batch processing completed successfully');

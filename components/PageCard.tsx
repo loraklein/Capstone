@@ -27,7 +27,9 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
   const [showFullText, setShowFullText] = useState(false);
 
   const handleView = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     onView(page);
   };
 
@@ -38,16 +40,20 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
   };
 
   const handleDelete = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
     onDelete(page.id);
   };
 
   const handleProcessAI = async () => {
     if (!onProcessAI || isProcessing) return;
-    
+
     setIsProcessing(true);
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      if (Platform.OS !== 'web') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
       await onProcessAI(page.id);
     } catch (error) {
       console.log('Error processing page with AI:', error);
@@ -122,7 +128,9 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
                 <Pressable
                   style={[styles.editButton, { backgroundColor: theme.primary }]}
                   onPress={() => {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    if (Platform.OS !== 'web') {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                    }
                     onEditText(page);
                   }}
                 >

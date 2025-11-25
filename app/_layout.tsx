@@ -160,6 +160,7 @@ function StackLayout() {
           options={{ 
             title: '',
             headerBackTitle: 'Back',
+            headerShown: true,
           }} 
         />
       </Stack>
