@@ -154,7 +154,7 @@ export default function ExportOptionsModal({
             </Pressable>
           )}
 
-          {/* Create Print Book Option - Web Only */}
+          {/* Create Printable Book Option - Web Only */}
           {IS_WEB && onPrintBook && (
             <Pressable
               style={[styles.option, { backgroundColor: theme.background, borderColor: theme.border }]}
@@ -167,7 +167,7 @@ export default function ExportOptionsModal({
                 <Icon name="menu-book" size={28} color={theme.primary} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={[styles.optionTitle, { color: theme.text }]}>Create Print Book</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Create Printable Book</Text>
                 <Text style={[styles.optionDescription, { color: theme.textSecondary }]}>
                   Generate a print-ready book with cover and professional formatting
                 </Text>

@@ -80,7 +80,7 @@ export default function BookExportSettingsModal({
           <View style={styles.header}>
             <View style={styles.headerLeft}>
               <Icon name="menu-book" size={24} color={theme.primary} />
-              <Text style={[styles.title, { color: theme.text }]}>Create Print Book</Text>
+              <Text style={[styles.title, { color: theme.text }]}>Create Printable Book</Text>
             </View>
             <Pressable onPress={onDismiss} style={styles.closeButton}>
               <Icon name="close" size={24} color={theme.text} />
@@ -306,7 +306,7 @@ export default function BookExportSettingsModal({
             >
               <Icon name="menu-book" size={20} color={theme.primaryText} />
               <Text style={[styles.exportButtonText, { color: theme.primaryText }]}>
-                Create Print Book
+                Create Printable Book
               </Text>
             </Pressable>
           </View>

@@ -169,9 +169,10 @@ export default function ProjectDetailScreen() {
   const handleExportCustomPdf = async (settings: PdfSettings) => {
     try {
       setShowCustomPdfModal(false);
-      // TODO: Pass settings to PDF generation
       console.log('Exporting custom PDF with settings:', settings);
-      await handleExportPdf(); // For now, use basic export - will enhance later
+      await generatePdf(projectName, description, capturedPages, {
+        customPdfSettings: settings,
+      });
     } catch (error) {
       console.error('Error exporting custom PDF:', error);
     }
@@ -185,9 +186,10 @@ export default function ProjectDetailScreen() {
   const handleExportPrintBook = async (settings: BookSettings) => {
     try {
       setShowPrintBookModal(false);
-      // TODO: Pass settings to book PDF generation
       console.log('Exporting print book with settings:', settings);
-      await handleExportPdf(); // For now, use basic export - will enhance later
+      await generatePdf(projectName, description, capturedPages, {
+        bookSettings: settings,
+      });
     } catch (error) {
       console.error('Error exporting print book:', error);
     }

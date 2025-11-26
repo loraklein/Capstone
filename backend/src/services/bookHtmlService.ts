@@ -1,7 +1,10 @@
 import { BookExportPayload, BookFrontMatter, BookExportPage } from './bookExportService';
+import { CustomPdfSettings, BookSettings } from './bookPdfService';
 
 interface RenderOptions {
   includeImages?: boolean;
+  customPdfSettings?: CustomPdfSettings;
+  bookSettings?: BookSettings;
 }
 
 const escapeHtml = (value: string): string =>
@@ -12,10 +15,68 @@ const escapeHtml = (value: string): string =>
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
 
-const renderTitlePage = (frontMatter: BookFrontMatter): string => {
+const getFontFamily = (font?: string): string => {
+  if (font === 'sans-serif') return '"Helvetica Neue", "Arial", sans-serif';
+  if (font === 'monospace') return '"Courier New", "Courier", monospace';
+  return '"Georgia", "Times New Roman", serif'; // Default to serif
+};
+
+const generateDynamicStyles = (options: RenderOptions): string => {
+  const customPdf = options.customPdfSettings;
+  const book = options.bookSettings;
+
+  const fontFamily = getFontFamily(customPdf?.fontFamily || book?.fontFamily);
+  const fontSize = customPdf?.fontSize || book?.fontSize || 12;
+  const lineHeight = customPdf?.lineSpacing || 1.6;
+
+  // Add page numbers for print books only
+  const pageNumberStyles = book ? `
+    @page {
+      @bottom-center {
+        content: counter(page);
+        font-family: ${fontFamily};
+        font-size: 10pt;
+        color: #5a4c43;
+      }
+    }
+    /* Skip page numbers on title page and don't count it */
+    @page :first {
+      @bottom-center {
+        content: none;
+      }
+    }
+    /* Reset page counter so content starts at page 1 */
+    .book-content {
+      counter-reset: page 1;
+    }
+  ` : '';
+
+  return `
+    body {
+      font-family: ${fontFamily};
+    }
+    p {
+      line-height: ${lineHeight};
+      font-size: ${fontSize}pt;
+    }
+    .page-text p {
+      font-size: ${fontSize}pt;
+      line-height: ${lineHeight};
+    }
+    ${pageNumberStyles}
+  `;
+};
+
+const renderTitlePage = (frontMatter: BookFrontMatter, bookSettings?: BookSettings): string => {
   const { titlePage, description } = frontMatter;
-  const subtitle = titlePage.subtitle ? `<p class="subtitle">${escapeHtml(titlePage.subtitle)}</p>` : '';
-  const author = titlePage.author ? `<p class="author">By ${escapeHtml(titlePage.author)}</p>` : '';
+
+  // Use book settings if provided, otherwise use defaults
+  const title = bookSettings?.title || titlePage.title;
+  const subtitle = bookSettings?.subtitle || titlePage.subtitle || '';
+  const author = bookSettings?.author || titlePage.author || '';
+
+  const subtitleHtml = subtitle ? `<p class="subtitle">${escapeHtml(subtitle)}</p>` : '';
+  const authorHtml = author ? `<p class="author">By ${escapeHtml(author)}</p>` : '';
   const descriptionBlock = description
     ? `<div class="description"><p>${escapeHtml(description)}</p></div>`
     : '';
@@ -23,9 +84,9 @@ const renderTitlePage = (frontMatter: BookFrontMatter): string => {
   return `
     <section class="title-page page-break">
       <div class="title-wrapper">
-        <h1>${escapeHtml(titlePage.title)}</h1>
-        ${subtitle}
-        ${author}
+        <h1>${escapeHtml(title)}</h1>
+        ${subtitleHtml}
+        ${authorHtml}
       </div>
       ${descriptionBlock}
     </section>
@@ -49,24 +110,38 @@ const renderPage = (page: BookExportPage, options: RenderOptions): string => {
       </figure>`
     : '';
 
-  return `
-    <section class="content-page page-break">
-      <header class="page-header">
-        <h2>Page ${page.pageNumber}</h2>
-      </header>
-      <div class="page-body">
-        <div class="page-text${image ? '' : ' full-width'}">
-          ${text}
+  // For continuous flow (book settings), just return the text
+  // For regular PDFs, keep section structure
+  if (options.bookSettings || options.customPdfSettings) {
+    // Continuous flow: just paragraphs with optional subtle divider
+    return `
+      ${text}
+      ${image}
+    `;
+  } else {
+    // Regular PDF: keep sections
+    return `
+      <section class="content-page">
+        <div class="page-body">
+          <div class="page-text${image ? '' : ' full-width'}">
+            ${text}
+          </div>
+          ${image}
         </div>
-        ${image}
-      </div>
-    </section>
-  `;
+      </section>
+    `;
+  }
 };
 
 export function renderBookHtml(payload: BookExportPayload, options: RenderOptions = {}): string {
   const pagesHtml = payload.pages.map((page) => renderPage(page, options)).join('\n');
   const includeImages = options.includeImages ?? false;
+
+  // For continuous flow (book/custom PDF), wrap content in a container
+  const isContinuousFlow = !!(options.bookSettings || options.customPdfSettings);
+  const contentHtml = isContinuousFlow
+    ? `<div class="book-content">\n${pagesHtml}\n</div>`
+    : pagesHtml;
 
   return `
     <!doctype html>
@@ -137,6 +212,17 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             margin-top: 2rem;
             max-width: 40rem;
           }
+          /* Continuous flow container for book/custom PDF */
+          .book-content {
+            max-width: 100%;
+            padding: 0;
+          }
+          .book-content p {
+            text-align: justify;
+            hyphenate-character: "-";
+            hyphens: auto;
+          }
+          /* Regular PDF sections */
           .content-page {
             padding: 2rem 1.5rem;
             min-height: 100vh;
@@ -218,24 +304,13 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
               background: transparent;
             }
           }
+          /* Dynamic styles based on user settings */
+          ${generateDynamicStyles(options)}
         </style>
       </head>
       <body>
-        ${renderTitlePage(payload.frontMatter)}
-        <section class="book-summary page-break">
-          <h2>Project Summary</h2>
-          <ul>
-            <li>Total pages: ${payload.summary.pageCount}</li>
-            <li>Pages with text: ${payload.summary.textPageCount}</li>
-            <li>Total words: ${payload.summary.totalWords}</li>
-            ${
-              includeImages && payload.summary.hasImages
-                ? `<li>Images included: Yes</li>`
-                : ''
-            }
-          </ul>
-        </section>
-        ${pagesHtml}
+        ${renderTitlePage(payload.frontMatter, options.bookSettings)}
+        ${contentHtml}
       </body>
     </html>
   `;

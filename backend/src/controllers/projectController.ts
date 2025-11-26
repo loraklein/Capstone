@@ -279,10 +279,22 @@ export const exportProjectBookPdf = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
+    // Parse custom PDF settings from query params
+    const customPdfSettings = req.query.customPdfSettings
+      ? JSON.parse(req.query.customPdfSettings as string)
+      : undefined;
+
+    // Parse book settings from query params
+    const bookSettings = req.query.bookSettings
+      ? JSON.parse(req.query.bookSettings as string)
+      : undefined;
+
     const payload = await buildBookExport(id, userId);
     const pdfBuffer = await generateBookPdf(payload, {
       includeImages,
       format: formatParam ? (formatParam.toLowerCase() as any) : undefined,
+      customPdfSettings,
+      bookSettings,
     });
 
     res.setHeader('Content-Type', 'application/pdf');
@@ -299,10 +311,10 @@ export const exportProjectBookPdf = async (req: Request, res: Response) => {
     console.error('Error in exportProjectBookPdf:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     const errorDetails = error instanceof Error ? error.stack : String(error);
-    
+
     console.error('PDF export error details:', errorDetails);
-    
-    res.status(500).json({ 
+
+    res.status(500).json({
       error: 'Failed to generate book PDF',
       details: process.env.NODE_ENV === 'production' ? undefined : errorMessage
     });

@@ -7,10 +7,17 @@ import { useAuth } from '../contexts/AuthContext';
 import { apiService } from '../utils/apiService';
 import { CapturedPage } from '../types';
 import { Buffer } from 'buffer';
+import { PdfSettings } from '../components/CustomPdfSettingsModal';
+import { BookSettings } from '../components/BookExportSettingsModal';
+
+interface PdfGenerationOptions {
+  customPdfSettings?: PdfSettings;
+  bookSettings?: BookSettings;
+}
 
 interface UsePdfGenerationReturn {
   isGenerating: boolean;
-  generatePdf: (projectName: string, description: string, pages: CapturedPage[]) => Promise<void>;
+  generatePdf: (projectName: string, description: string, pages: CapturedPage[], options?: PdfGenerationOptions) => Promise<void>;
 }
 
 const sanitizeFileName = (value: string) =>
@@ -25,7 +32,7 @@ export default function usePdfGeneration(projectId: string): UsePdfGenerationRet
   const [isGenerating, setIsGenerating] = useState(false);
   const { getAccessToken } = useAuth();
 
-  const generatePdf = async (projectName: string, _description: string, pages: CapturedPage[]) => {
+  const generatePdf = async (projectName: string, _description: string, pages: CapturedPage[], options?: PdfGenerationOptions) => {
     if (pages.length === 0) {
       throw new Error('No pages available to export.');
     }
@@ -51,7 +58,17 @@ export default function usePdfGeneration(projectId: string): UsePdfGenerationRet
       }
 
       const baseUrl = apiService.getBaseURL();
-      const downloadUrl = `${baseUrl}/projects/${projectId}/export/book/pdf`;
+
+      // Build query parameters
+      const queryParams = new URLSearchParams();
+      if (options?.customPdfSettings) {
+        queryParams.append('customPdfSettings', JSON.stringify(options.customPdfSettings));
+      }
+      if (options?.bookSettings) {
+        queryParams.append('bookSettings', JSON.stringify(options.bookSettings));
+      }
+
+      const downloadUrl = `${baseUrl}/projects/${projectId}/export/book/pdf${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
       const fileName = `${sanitizeFileName(projectName)}-book.pdf`;
 
       if (Platform.OS === 'web') {

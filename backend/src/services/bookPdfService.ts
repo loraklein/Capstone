@@ -5,9 +5,29 @@ import { executablePath } from 'puppeteer';
 import { BookExportPayload } from './bookExportService';
 import { renderBookHtml } from './bookHtmlService';
 
+export interface CustomPdfSettings {
+  fontFamily?: 'serif' | 'sans-serif' | 'monospace';
+  fontSize?: number;
+  lineSpacing?: number;
+  pageSize?: 'letter' | 'a4';
+}
+
+export interface BookSettings {
+  bookSize?: '6x9' | '8x11' | '5.5x8.5';
+  title?: string;
+  subtitle?: string;
+  author?: string;
+  fontFamily?: 'serif' | 'sans-serif';
+  fontSize?: number;
+  includeBackCover?: boolean;
+  coverTemplate?: 'simple' | 'elegant' | 'modern';
+}
+
 interface BookPdfOptions {
   includeImages?: boolean;
   format?: PaperFormat;
+  customPdfSettings?: CustomPdfSettings;
+  bookSettings?: BookSettings;
 }
 
 const DEFAULT_FORMAT: PaperFormat = 'letter';
@@ -141,24 +161,56 @@ const launchBrowser = async (): Promise<Browser> => {
   return puppeteer.launch(launchOptions);
 };
 
+// Convert book sizes to PDF dimensions
+function getBookDimensions(bookSize: string): { width: string; height: string } {
+  const dimensions: Record<string, { width: string; height: string }> = {
+    '6x9': { width: '6in', height: '9in' },
+    '8x11': { width: '8.5in', height: '11in' },
+    '5.5x8.5': { width: '5.5in', height: '8.5in' },
+  };
+  return dimensions[bookSize] || dimensions['6x9'];
+}
+
 export async function generateBookPdf(
   payload: BookExportPayload,
   options: BookPdfOptions = {}
 ): Promise<Buffer> {
-  const html = renderBookHtml(payload, { includeImages: options.includeImages });
+  const html = renderBookHtml(payload, {
+    includeImages: options.includeImages,
+    customPdfSettings: options.customPdfSettings,
+    bookSettings: options.bookSettings,
+  });
 
   let browser: Browser | null = null;
   try {
     browser = await launchBrowser();
     const page = await browser.newPage();
-    
+
     // Set a longer timeout for page operations
     page.setDefaultTimeout(30000);
-    
+
     await page.setContent(html, { waitUntil: 'networkidle0', timeout: 30000 });
 
+    // Determine page format based on settings
+    let pdfFormat: PaperFormat | undefined = options.format ?? DEFAULT_FORMAT;
+    let pdfWidth: string | undefined;
+    let pdfHeight: string | undefined;
+
+    // Book settings take priority (for print books)
+    if (options.bookSettings?.bookSize) {
+      const dims = getBookDimensions(options.bookSettings.bookSize);
+      pdfWidth = dims.width;
+      pdfHeight = dims.height;
+      pdfFormat = undefined; // Use custom dimensions
+    } else if (options.customPdfSettings?.pageSize) {
+      // Custom PDF settings (for formatted PDFs)
+      pdfFormat = options.customPdfSettings.pageSize === 'a4' ? 'A4' : 'Letter';
+    }
+
     const pdfUint8Array = await page.pdf({
-      format: options.format ?? DEFAULT_FORMAT,
+      format: pdfFormat,
+      width: pdfWidth,
+      height: pdfHeight,
       printBackground: true,
       preferCSSPageSize: false,
       margin: {
