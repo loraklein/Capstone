@@ -4,6 +4,7 @@ import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
 const SCREEN_WIDTH = Dimensions.get('window').width;
@@ -13,11 +14,13 @@ import ConfirmationDialog from '../../components/ConfirmationDialog';
 import DraggablePageCard from '../../components/DraggablePageCard';
 import EmptyState from '../../components/EmptyState';
 import ExportPdfButton from '../../components/ExportPdfButton';
+import ExportOptionsModal from '../../components/ExportOptionsModal';
 import LineByLineTextEditor from '../../components/LineByLineTextEditor';
 import PageCard from '../../components/PageCard';
 import PhotoSourceSelector from '../../components/PhotoSourceSelector';
 import PhotoViewer from '../../components/PhotoViewer';
 import ProjectHeader from '../../components/ProjectHeader';
+import WebFeaturesBanner from '../../components/WebFeaturesBanner';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCameraManagement } from '../../hooks/useCameraManagement';
 import { useCameraOrientation } from '../../hooks/useCameraOrientation';
@@ -57,6 +60,8 @@ export default function ProjectDetailScreen() {
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editingPage, setEditingPage] = useState<CapturedPage | null>(null);
+  const [showWebBanner, setShowWebBanner] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
@@ -110,6 +115,47 @@ export default function ProjectDetailScreen() {
   };
 
   const hasPagesWithText = capturedPages.some(page => page.edited_text || page.extracted_text);
+
+  // Check if we should show the web features banner
+  useEffect(() => {
+    const checkWebBanner = async () => {
+      try {
+        // Only show on mobile, not on web
+        if (Platform.OS === 'web') return;
+
+        const bannerDismissed = await AsyncStorage.getItem('webFeaturesBannerDismissed');
+        if (bannerDismissed === 'true') return;
+
+        // Show banner if project has at least one page with text
+        if (hasPagesWithText) {
+          setShowWebBanner(true);
+        }
+      } catch (error) {
+        console.error('Error checking web banner:', error);
+      }
+    };
+
+    checkWebBanner();
+  }, [hasPagesWithText]);
+
+  const handleDismissWebBanner = async () => {
+    try {
+      await AsyncStorage.setItem('webFeaturesBannerDismissed', 'true');
+      setShowWebBanner(false);
+    } catch (error) {
+      console.error('Error dismissing banner:', error);
+    }
+  };
+
+  const handleLearnMoreWebFeatures = () => {
+    setShowWebBanner(false);
+    setShowExportModal(true);
+  };
+
+  const handleExportClick = () => {
+    // Show the export options modal instead of exporting directly
+    setShowExportModal(true);
+  };
 
   useCameraOrientation(showCamera);
 
@@ -239,7 +285,7 @@ export default function ProjectDetailScreen() {
 
               {hasPagesWithPhotos && (
                 <ExportPdfButton
-                  onPress={handleExportPdf}
+                  onPress={handleExportClick}
                   disabled={isGenerating}
                   isGenerating={isGenerating}
                 />
@@ -252,11 +298,19 @@ export default function ProjectDetailScreen() {
       {capturedPages.length === 1 && hasPagesWithPhotos && (
         <View style={[styles.exportSection, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
           <ExportPdfButton
-            onPress={handleExportPdf}
+            onPress={handleExportClick}
             disabled={isGenerating}
             isGenerating={isGenerating}
           />
         </View>
+      )}
+
+      {/* Web Features Banner - shown once after AI processing */}
+      {showWebBanner && (
+        <WebFeaturesBanner
+          onLearnMore={handleLearnMoreWebFeatures}
+          onDismiss={handleDismissWebBanner}
+        />
       )}
 
       {isReorderMode && (
@@ -359,6 +413,15 @@ export default function ProjectDetailScreen() {
           onSave={handleSaveEditedText}
         />
       )}
+
+      {/* Export Options Modal */}
+      <ExportOptionsModal
+        visible={showExportModal}
+        projectId={projectId}
+        projectName={projectName}
+        onQuickExport={handleExportPdf}
+        onDismiss={() => setShowExportModal(false)}
+      />
     </View>
   );
 }

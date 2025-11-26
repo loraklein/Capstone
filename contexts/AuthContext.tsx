@@ -47,12 +47,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const loadSession = async () => {
     try {
-      // Skip AsyncStorage on web to prevent hydration issues
       if (Platform.OS === 'web') {
+        // On web, Supabase uses localStorage automatically
+        // Just check for an existing session
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setSession(session);
+          setUser(session.user);
+        }
         setLoading(false);
         return;
       }
-      
+
+      // On mobile, use AsyncStorage
       const sessionStr = await AsyncStorage.getItem('supabase_session');
       if (sessionStr) {
         const savedSession = JSON.parse(sessionStr);

@@ -85,10 +85,26 @@ function StackLayout() {
     const inAuthGroup = segments[0] === 'auth';
 
     if (!user && !inAuthGroup) {
+      // Save the current path for redirect after login
+      const currentPath = segments.join('/');
+      if (currentPath && Platform.OS === 'web') {
+        // Store the full URL path in localStorage
+        const fullPath = window.location.pathname + window.location.search;
+        localStorage.setItem('redirectAfterLogin', fullPath);
+      }
       // Redirect to sign in if not authenticated
       router.replace('/auth/signin');
     } else if (user && inAuthGroup) {
-      // Redirect to app if authenticated
+      // Check if there's a redirect URL saved
+      if (Platform.OS === 'web') {
+        const redirectPath = localStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          localStorage.removeItem('redirectAfterLogin');
+          router.replace(redirectPath as any);
+          return;
+        }
+      }
+      // Default: Redirect to app if authenticated
       router.replace('/');
     }
   }, [user, segments, loading]);
