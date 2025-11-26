@@ -27,9 +27,6 @@ const renderTitlePage = (frontMatter: BookFrontMatter): string => {
         ${subtitle}
         ${author}
       </div>
-      <div class="meta">
-        <p class="generated-on">Generated on ${new Date(titlePage.generatedAt).toLocaleString()}</p>
-      </div>
       ${descriptionBlock}
     </section>
   `;
@@ -56,18 +53,6 @@ const renderPage = (page: BookExportPage, options: RenderOptions): string => {
     <section class="content-page page-break">
       <header class="page-header">
         <h2>Page ${page.pageNumber}</h2>
-        ${
-          page.ai.provider
-            ? `<div class="ai-meta">
-                <span>${escapeHtml(page.ai.provider)}</span>
-                ${
-                  typeof page.ai.confidence === 'number'
-                    ? `<span>Confidence: ${Math.round(page.ai.confidence * 100)}%</span>`
-                    : ''
-                }
-              </div>`
-            : ''
-        }
       </header>
       <div class="page-body">
         <div class="page-text${image ? '' : ' full-width'}">
@@ -75,13 +60,6 @@ const renderPage = (page: BookExportPage, options: RenderOptions): string => {
         </div>
         ${image}
       </div>
-      ${
-        !showImages && page.photoUrl
-          ? `<footer class="page-footnote">
-              <p>Source scan available in the project but excluded from this export.</p>
-            </footer>`
-          : ''
-      }
     </section>
   `;
 };

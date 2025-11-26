@@ -15,6 +15,8 @@ import DraggablePageCard from '../../components/DraggablePageCard';
 import EmptyState from '../../components/EmptyState';
 import ExportPdfButton from '../../components/ExportPdfButton';
 import ExportOptionsModal from '../../components/ExportOptionsModal';
+import CustomPdfSettingsModal, { PdfSettings } from '../../components/CustomPdfSettingsModal';
+import BookExportSettingsModal, { BookSettings } from '../../components/BookExportSettingsModal';
 import LineByLineTextEditor from '../../components/LineByLineTextEditor';
 import PageCard from '../../components/PageCard';
 import PhotoSourceSelector from '../../components/PhotoSourceSelector';
@@ -62,6 +64,8 @@ export default function ProjectDetailScreen() {
   const [editingPage, setEditingPage] = useState<CapturedPage | null>(null);
   const [showWebBanner, setShowWebBanner] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showCustomPdfModal, setShowCustomPdfModal] = useState(false);
+  const [showPrintBookModal, setShowPrintBookModal] = useState(false);
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
@@ -155,6 +159,38 @@ export default function ProjectDetailScreen() {
   const handleExportClick = () => {
     // Show the export options modal instead of exporting directly
     setShowExportModal(true);
+  };
+
+  const handleCustomPdf = () => {
+    // Open custom PDF settings modal
+    setShowCustomPdfModal(true);
+  };
+
+  const handleExportCustomPdf = async (settings: PdfSettings) => {
+    try {
+      setShowCustomPdfModal(false);
+      // TODO: Pass settings to PDF generation
+      console.log('Exporting custom PDF with settings:', settings);
+      await handleExportPdf(); // For now, use basic export - will enhance later
+    } catch (error) {
+      console.error('Error exporting custom PDF:', error);
+    }
+  };
+
+  const handlePrintBook = () => {
+    // Open print book settings modal
+    setShowPrintBookModal(true);
+  };
+
+  const handleExportPrintBook = async (settings: BookSettings) => {
+    try {
+      setShowPrintBookModal(false);
+      // TODO: Pass settings to book PDF generation
+      console.log('Exporting print book with settings:', settings);
+      await handleExportPdf(); // For now, use basic export - will enhance later
+    } catch (error) {
+      console.error('Error exporting print book:', error);
+    }
   };
 
   useCameraOrientation(showCamera);
@@ -420,7 +456,25 @@ export default function ProjectDetailScreen() {
         projectId={projectId}
         projectName={projectName}
         onQuickExport={handleExportPdf}
+        onCustomPdf={handleCustomPdf}
+        onPrintBook={handlePrintBook}
         onDismiss={() => setShowExportModal(false)}
+      />
+
+      {/* Custom PDF Settings Modal */}
+      <CustomPdfSettingsModal
+        visible={showCustomPdfModal}
+        onExport={handleExportCustomPdf}
+        onDismiss={() => setShowCustomPdfModal(false)}
+      />
+
+      {/* Book Export Settings Modal */}
+      <BookExportSettingsModal
+        visible={showPrintBookModal}
+        projectName={projectName}
+        projectDescription={description}
+        onExport={handleExportPrintBook}
+        onDismiss={() => setShowPrintBookModal(false)}
       />
     </View>
   );

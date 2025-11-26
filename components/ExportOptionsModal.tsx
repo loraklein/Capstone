@@ -20,6 +20,8 @@ interface ExportOptionsModalProps {
   projectId: string;
   projectName: string;
   onQuickExport: () => void;
+  onCustomPdf?: () => void;
+  onPrintBook?: () => void;
   onDismiss: () => void;
 }
 
@@ -32,6 +34,8 @@ export default function ExportOptionsModal({
   projectId,
   projectName,
   onQuickExport,
+  onCustomPdf,
+  onPrintBook,
   onDismiss,
 }: ExportOptionsModalProps) {
   const { theme } = useTheme();
@@ -128,7 +132,51 @@ export default function ExportOptionsModal({
             <Icon name="chevron-right" size={24} color={theme.textTertiary} />
           </Pressable>
 
-          {/* Design Mode Option */}
+          {/* Customize PDF Option - Web Only */}
+          {IS_WEB && onCustomPdf && (
+            <Pressable
+              style={[styles.option, { backgroundColor: theme.background, borderColor: theme.border }]}
+              onPress={() => {
+                onDismiss();
+                onCustomPdf();
+              }}
+            >
+              <View style={[styles.optionIcon, { backgroundColor: theme.secondary }]}>
+                <Icon name="tune" size={28} color={theme.primary} />
+              </View>
+              <View style={styles.optionContent}>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Customize PDF</Text>
+                <Text style={[styles.optionDescription, { color: theme.textSecondary }]}>
+                  Choose fonts, text size, and formatting options
+                </Text>
+              </View>
+              <Icon name="chevron-right" size={24} color={theme.textTertiary} />
+            </Pressable>
+          )}
+
+          {/* Create Print Book Option - Web Only */}
+          {IS_WEB && onPrintBook && (
+            <Pressable
+              style={[styles.option, { backgroundColor: theme.background, borderColor: theme.border }]}
+              onPress={() => {
+                onDismiss();
+                onPrintBook();
+              }}
+            >
+              <View style={[styles.optionIcon, { backgroundColor: theme.secondary }]}>
+                <Icon name="menu-book" size={28} color={theme.primary} />
+              </View>
+              <View style={styles.optionContent}>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Create Print Book</Text>
+                <Text style={[styles.optionDescription, { color: theme.textSecondary }]}>
+                  Generate a print-ready book with cover and professional formatting
+                </Text>
+              </View>
+              <Icon name="chevron-right" size={24} color={theme.textTertiary} />
+            </Pressable>
+          )}
+
+          {/* Design Mode Option - Mobile Only */}
           {!IS_WEB && (
             <View style={[styles.designSection, { backgroundColor: theme.background, borderColor: theme.border }]}>
               <View style={styles.designHeader}>
@@ -215,15 +263,6 @@ export default function ExportOptionsModal({
             </View>
           )}
 
-          {/* Web-only message about design features */}
-          {IS_WEB && (
-            <View style={[styles.webNotice, { backgroundColor: theme.secondary, borderColor: theme.border }]}>
-              <Icon name="info" size={20} color={theme.primary} />
-              <Text style={[styles.webNoticeText, { color: theme.text }]}>
-                Design Mode features coming soon! For now, use Quick Export to download your PDF.
-              </Text>
-            </View>
-          )}
         </View>
       </View>
     </Modal>
