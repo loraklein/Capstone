@@ -43,10 +43,10 @@ export default function ExportOptionsModal({
 
   // Generate web URL for this project
   const getProjectWebUrl = () => {
-    // In development, use localhost; in production, use your deployed URL
+    // In development, use localhost; in production, use deployed URL
     const baseUrl = __DEV__
       ? 'http://localhost:8081'
-      : 'https://your-app-url.netlify.app'; // Replace with your actual web URL
+      : window.location.origin; // Use current deployment URL
 
     return `${baseUrl}/project/${projectId}?name=${encodeURIComponent(projectName)}`;
   };
