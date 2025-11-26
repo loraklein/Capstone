@@ -16,6 +16,7 @@ import projectRoutes from './routes/projectRoutes';
 import pageRoutes from './routes/pageRoutes';
 import aiRoutes from './routes/aiRoutes';
 import userRoutes from './routes/userRoutes';
+import chapterRoutes from './routes/chapterRoutes';
 
 // Import middleware
 import { authenticateUser } from './middleware/auth';
@@ -65,6 +66,7 @@ app.use('/api/users', userRoutes); // No auth required for test user creation
 app.use('/api/projects', authenticateUser, projectRoutes);
 app.use('/api/pages', authenticateUser, pageRoutes);
 app.use('/api/ai', authenticateUser, aiRoutes);
+app.use('/api/chapters', authenticateUser, chapterRoutes);
 
 // 404 handler
 app.use((req, res) => {

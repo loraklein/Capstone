@@ -11,15 +11,17 @@ interface ProjectHeaderProps {
   showAddButton?: boolean;
   onAddPage?: () => void;
   onBack?: () => void;
+  onManageChapters?: () => void;
 }
 
-export default function ProjectHeader({ 
-  projectName, 
-  description, 
+export default function ProjectHeader({
+  projectName,
+  description,
   pageCount,
   showAddButton,
   onAddPage,
-  onBack
+  onBack,
+  onManageChapters
 }: ProjectHeaderProps) {
   const { theme } = useTheme();
 
@@ -51,22 +53,39 @@ export default function ProjectHeader({
             {pageCount} {pageCount === 1 ? 'page' : 'pages'}
           </Text>
         </View>
-        
-        {showAddButton && onAddPage && (
-          <Pressable 
-            style={({ pressed }) => [
-              styles.addButton, 
-              {
-                backgroundColor: theme.primary,
-                transform: [{ scale: pressed ? 0.95 : 1 }],
-              }
-            ]} 
-            onPress={onAddPage}
-          >
-            <Icon name="add" size={20} color="white" />
-            <Text style={[styles.addButtonText, { color: 'white' }]}>Add Page</Text>
-          </Pressable>
-        )}
+
+        <View style={styles.buttonGroup}>
+          {onManageChapters && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.iconButton,
+                {
+                  backgroundColor: theme.secondary,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                }
+              ]}
+              onPress={onManageChapters}
+            >
+              <Icon name="bookmark" size={24} color={theme.text} />
+            </Pressable>
+          )}
+
+          {showAddButton && onAddPage && (
+            <Pressable
+              style={({ pressed }) => [
+                styles.addButton,
+                {
+                  backgroundColor: theme.primary,
+                  transform: [{ scale: pressed ? 0.95 : 1 }],
+                }
+              ]}
+              onPress={onAddPage}
+            >
+              <Icon name="add" size={20} color="white" />
+              <Text style={[styles.addButtonText, { color: 'white' }]}>Add Page</Text>
+            </Pressable>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -119,6 +138,18 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  buttonGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  iconButton: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   addButton: {
     flexDirection: 'row',

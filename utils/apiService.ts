@@ -178,6 +178,51 @@ export class ApiService {
       body: JSON.stringify({ provider }),
     });
   }
+
+  // Chapter management
+  async getProjectChapters(projectId: string): Promise<any> {
+    return this.makeRequest(`/chapters/project/${projectId}`);
+  }
+
+  async createChapter(projectId: string, chapter: {
+    title: string;
+    start_page_number: number;
+    end_page_number?: number;
+    chapter_type?: string;
+    description?: string;
+  }): Promise<any> {
+    return this.makeRequest(`/chapters/project/${projectId}`, {
+      method: 'POST',
+      body: JSON.stringify(chapter),
+    });
+  }
+
+  async updateChapter(chapterId: string, updates: {
+    title?: string;
+    start_page_number?: number;
+    end_page_number?: number;
+    chapter_type?: string;
+    description?: string;
+    chapter_order?: number;
+  }): Promise<any> {
+    return this.makeRequest(`/chapters/${chapterId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates),
+    });
+  }
+
+  async deleteChapter(chapterId: string): Promise<any> {
+    return this.makeRequest(`/chapters/${chapterId}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async reorderChapters(projectId: string, chapterIds: string[]): Promise<any> {
+    return this.makeRequest(`/chapters/project/${projectId}/reorder`, {
+      method: 'PUT',
+      body: JSON.stringify({ chapterIds }),
+    });
+  }
 }
 
 // Export singleton instance

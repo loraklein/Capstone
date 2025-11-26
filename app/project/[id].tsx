@@ -17,6 +17,7 @@ import ExportPdfButton from '../../components/ExportPdfButton';
 import ExportOptionsModal from '../../components/ExportOptionsModal';
 import CustomPdfSettingsModal, { PdfSettings } from '../../components/CustomPdfSettingsModal';
 import BookExportSettingsModal, { BookSettings } from '../../components/BookExportSettingsModal';
+import ChapterManagementModal from '../../components/ChapterManagementModal';
 import LineByLineTextEditor from '../../components/LineByLineTextEditor';
 import PageCard from '../../components/PageCard';
 import PhotoSourceSelector from '../../components/PhotoSourceSelector';
@@ -66,6 +67,7 @@ export default function ProjectDetailScreen() {
   const [showExportModal, setShowExportModal] = useState(false);
   const [showCustomPdfModal, setShowCustomPdfModal] = useState(false);
   const [showPrintBookModal, setShowPrintBookModal] = useState(false);
+  const [showChapterModal, setShowChapterModal] = useState(false);
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
@@ -239,12 +241,13 @@ export default function ProjectDetailScreen() {
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
-      <ProjectHeader 
+      <ProjectHeader
         projectName={projectName}
         description={description}
         pageCount={capturedPages.length}
         showAddButton={capturedPages.length > 0 && !isReorderMode}
         onAddPage={handleAddPage}
+        onManageChapters={capturedPages.length > 0 ? () => setShowChapterModal(true) : undefined}
       />
 
       {capturedPages.length > 1 && (
@@ -477,6 +480,14 @@ export default function ProjectDetailScreen() {
         projectDescription={description}
         onExport={handleExportPrintBook}
         onDismiss={() => setShowPrintBookModal(false)}
+      />
+
+      {/* Chapter Management Modal */}
+      <ChapterManagementModal
+        visible={showChapterModal}
+        projectId={projectId}
+        totalPages={capturedPages.length}
+        onDismiss={() => setShowChapterModal(false)}
       />
     </View>
   );
