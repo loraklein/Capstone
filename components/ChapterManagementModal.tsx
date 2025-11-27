@@ -41,7 +41,7 @@ export default function ChapterManagementModal({
   const [title, setTitle] = useState('');
   const [startPage, setStartPage] = useState('');
   const [endPage, setEndPage] = useState('');
-  const [chapterType, setChapterType] = useState<Chapter['chapter_type']>('chapter');
+  const [chapterType, setChapterType] = useState<Chapter['chapter_type']>('entry');
   const [description, setDescription] = useState('');
 
   useEffect(() => {
@@ -69,7 +69,7 @@ export default function ChapterManagementModal({
     setTitle('');
     setStartPage('');
     setEndPage('');
-    setChapterType('chapter');
+    setChapterType('entry');
     setDescription('');
   };
 
@@ -89,7 +89,7 @@ export default function ChapterManagementModal({
     setTitle('');
     setStartPage('');
     setEndPage('');
-    setChapterType('chapter');
+    setChapterType('entry');
     setDescription('');
   };
 
@@ -243,7 +243,7 @@ export default function ChapterManagementModal({
       </View>
 
       <View style={styles.typeRow}>
-        {(['chapter', 'section', 'letter', 'recipe', 'entry'] as const).map((type) => (
+        {(['entry', 'letter', 'recipe', 'chapter', 'section'] as const).map((type) => (
           <Pressable
             key={type}
             style={[

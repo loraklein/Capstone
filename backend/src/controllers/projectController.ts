@@ -7,7 +7,7 @@ import { generateBookPdf } from '../services/bookPdfService';
 
 export const createProject = async (req: Request, res: Response) => {
   try {
-    const { title, description, lockOrientation } = req.body;
+    const { title, description, lockOrientation, project_type } = req.body;
     const userId = req.user?.id; // Assuming auth middleware sets req.user
 
     if (!userId) {
@@ -22,6 +22,7 @@ export const createProject = async (req: Request, res: Response) => {
           name: title, // Map title to name field in database
           description,
           lock_orientation: lockOrientation || false,
+          project_type: project_type || 'other',
           page_count: 0
         }
       ])
@@ -40,6 +41,7 @@ export const createProject = async (req: Request, res: Response) => {
       name: data.name,
       description: data.description,
       page_count: data.page_count,
+      project_type: data.project_type,
       created_at: data.created_at,
       updated_at: data.updated_at,
     };
@@ -77,6 +79,7 @@ export const getProjects = async (req: Request, res: Response) => {
       name: project.name,
       description: project.description,
       page_count: project.page_count,
+      project_type: project.project_type || 'other',
       created_at: project.created_at,
       updated_at: project.updated_at,
     }));
@@ -122,20 +125,23 @@ export const getProjectById = async (req: Request, res: Response) => {
 export const updateProject = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, description, lockOrientation } = req.body;
+    const { name, description, lockOrientation, project_type } = req.body;
     const userId = req.user?.id;
 
     if (!userId) {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
+    // Build update object with only provided fields
+    const updateData: any = {};
+    if (name !== undefined) updateData.name = name;
+    if (description !== undefined) updateData.description = description;
+    if (lockOrientation !== undefined) updateData.lock_orientation = lockOrientation;
+    if (project_type !== undefined) updateData.project_type = project_type;
+
     const { data, error } = await supabase
       .from('projects')
-      .update({
-        name,
-        description,
-        lock_orientation: lockOrientation
-      })
+      .update(updateData)
       .eq('id', id)
       .eq('user_id', userId)
       .select()
@@ -149,7 +155,19 @@ export const updateProject = async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to update project' });
     }
 
-    res.json(data);
+    // Transform the response to match frontend expectations
+    const transformedData = {
+      id: data.id,
+      title: data.name,
+      name: data.name,
+      description: data.description,
+      page_count: data.page_count,
+      project_type: data.project_type || 'other',
+      created_at: data.created_at,
+      updated_at: data.updated_at,
+    };
+
+    res.json(transformedData);
   } catch (error) {
     console.error('Error in updateProject:', error);
     res.status(500).json({ error: 'Internal server error' });

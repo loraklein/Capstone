@@ -28,6 +28,82 @@ export default function SignUpScreen() {
   const { theme } = useTheme();
   const colors = theme;
 
+  // Helper function to validate password and return user-friendly error message
+  // Returns all missing requirements in a single message
+  const validatePassword = (password: string): string | null => {
+    const missingRequirements: string[] = [];
+    
+    if (password.length < 8) {
+      missingRequirements.push('8 characters');
+    }
+    
+    if (!/[a-z]/.test(password)) {
+      missingRequirements.push('one lowercase letter');
+    }
+    
+    if (!/[A-Z]/.test(password)) {
+      missingRequirements.push('one uppercase letter');
+    }
+    
+    if (!/[0-9]/.test(password)) {
+      missingRequirements.push('one number');
+    }
+    
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      missingRequirements.push('one special character (!@#$%^&*...)');
+    }
+    
+    if (missingRequirements.length === 0) {
+      return null;
+    }
+    
+    // Format as a single, clear message
+    if (missingRequirements.length === 1) {
+      return `Password must contain at least ${missingRequirements[0]}`;
+    } else {
+      const lastRequirement = missingRequirements.pop();
+      return `Password must contain at least ${missingRequirements.join(', ')}, and ${lastRequirement}`;
+    }
+  };
+
+  // Helper function to convert Supabase error messages to user-friendly ones
+  const formatPasswordError = (errorMessage: string): string => {
+    // If it's already a user-friendly message from our validation, return it
+    if (errorMessage.includes('Password must contain at least')) {
+      return errorMessage;
+    }
+    
+    // Check for common Supabase password error patterns
+    if (errorMessage.toLowerCase().includes('password')) {
+      // Extract the key requirements from Supabase's verbose message
+      const hasLength = /8.*character/i.test(errorMessage);
+      const hasLowercase = /lowercase|abcdefghijklmnopqrstuvwxyz/i.test(errorMessage);
+      const hasUppercase = /uppercase|ABCDEFG/i.test(errorMessage);
+      const hasNumber = /number|123456789/i.test(errorMessage);
+      const hasSpecial = /special|!@#\$%|symbol/i.test(errorMessage);
+      
+      const requirements: string[] = [];
+      if (hasLength) requirements.push('8 characters');
+      if (hasLowercase) requirements.push('one lowercase letter');
+      if (hasUppercase) requirements.push('one uppercase letter');
+      if (hasNumber) requirements.push('one number');
+      if (hasSpecial) requirements.push('one special character (!@#$%^&*...)');
+      
+      if (requirements.length > 0) {
+        // Format as a single, clear message with all requirements
+        if (requirements.length === 1) {
+          return `Password must contain at least ${requirements[0]}`;
+        } else {
+          const lastRequirement = requirements.pop();
+          return `Password must contain at least ${requirements.join(', ')}, and ${lastRequirement}`;
+        }
+      }
+    }
+    
+    // Fallback: return a generic friendly message with all requirements
+    return 'Password must contain at least 8 characters, one lowercase letter, one uppercase letter, one number, and one special character (!@#$%^&*...)';
+  };
+
   const handleSignUp = async () => {
     // Clear any previous errors
     setError('');
@@ -43,8 +119,10 @@ export default function SignUpScreen() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
+    // Validate password with user-friendly messages
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
@@ -53,7 +131,9 @@ export default function SignUpScreen() {
     setLoading(false);
 
     if (signUpError) {
-      setError(signUpError.message || 'Could not create account. Please try again.');
+      // Format password errors to be user-friendly
+      const errorMessage = signUpError.message || 'Could not create account. Please try again.';
+      setError(formatPasswordError(errorMessage));
     } else {
       setSuccess(true);
       // Auto-redirect after 2 seconds

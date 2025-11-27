@@ -1,3 +1,5 @@
+export type ProjectType = 'other' | 'recipes' | 'journal' | 'letters';
+
 export interface CapturedPage {
   id: string;
   pageNumber: number;

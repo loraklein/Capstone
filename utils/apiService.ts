@@ -91,10 +91,10 @@ export class ApiService {
   }
 
   // Project management
-  async createProject(title: string, description?: string): Promise<any> {
+  async createProject(title: string, description?: string, project_type?: string): Promise<any> {
     return this.makeRequest('/projects', {
       method: 'POST',
-      body: JSON.stringify({ title, description }),
+      body: JSON.stringify({ title, description, project_type }),
     });
   }
 
@@ -106,7 +106,7 @@ export class ApiService {
     return this.makeRequest(`/projects/${projectId}`);
   }
 
-  async updateProject(projectId: string, updates: { title?: string; description?: string }): Promise<any> {
+  async updateProject(projectId: string, updates: { title?: string; description?: string; project_type?: string }): Promise<any> {
     return this.makeRequest(`/projects/${projectId}`, {
       method: 'PUT',
       body: JSON.stringify(updates),

@@ -1,7 +1,8 @@
 import { MaterialIcons } from '@expo/vector-icons';
 import Icon from '../components/Icon';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../contexts/ThemeContext';
 
 interface ProjectHeaderProps {
@@ -24,9 +25,17 @@ export default function ProjectHeader({
   onManageChapters
 }: ProjectHeaderProps) {
   const { theme } = useTheme();
+  const insets = useSafeAreaInsets();
 
   return (
-    <View style={[styles.header, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
+    <View style={[
+      styles.header, 
+      { 
+        backgroundColor: theme.surface, 
+        borderBottomColor: theme.divider,
+        paddingTop: Platform.OS === 'web' ? 20 : insets.top + 20, // Add safe area top padding on mobile
+      }
+    ]}>
       <View style={styles.headerTop}>
         {onBack && (
           <Pressable 

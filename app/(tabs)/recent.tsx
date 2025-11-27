@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import React from 'react';
-import { FlatList, RefreshControl, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, View } from 'react-native';
 import RecentEmptyState from '../../components/RecentEmptyState';
 import RecentPageCard from '../../components/RecentPageCard';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -44,7 +44,11 @@ export default function RecentScreen() {
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
-        {!isLoading && recentPages.length === 0 ? (
+        {isLoading && recentPages.length === 0 ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.primary} />
+          </View>
+        ) : !isLoading && recentPages.length === 0 ? (
           <RecentEmptyState />
         ) : (
           <FlatList
@@ -55,7 +59,7 @@ export default function RecentScreen() {
             contentContainerStyle={styles.recentPagesList}
             refreshControl={
               <RefreshControl
-                refreshing={isLoading}
+                refreshing={isLoading && recentPages.length > 0}
                 onRefresh={refreshRecentPages}
                 tintColor={theme.primary}
                 colors={[theme.primary]}
@@ -76,6 +80,11 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 16,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   recentPagesList: {
     paddingTop: 8,

@@ -178,8 +178,7 @@ function StackLayout() {
           name="project/[id]"
           options={{
             title: '',
-            headerBackTitle: 'Back',
-            headerShown: Platform.OS !== 'web',
+            headerShown: false, // Hide header since ProjectHeader component provides custom header
           }}
         />
       </Stack>

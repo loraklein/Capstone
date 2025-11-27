@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as FileSystem from 'expo-file-system/legacy';
 import { Platform } from 'react-native';
 import { apiService } from './apiService';
+import { ProjectType } from '../types';
 
 export interface Project {
   id: string;
@@ -9,9 +10,11 @@ export interface Project {
   description: string;
   pageCount: number;
   lockOrientation?: boolean;
+  projectType?: ProjectType;
   // Backend fields
   title?: string;
   page_count?: number;
+  project_type?: ProjectType;
   created_at?: string;
   updated_at?: string;
 }
@@ -19,12 +22,14 @@ export interface Project {
 export interface CreateProjectData {
   name: string;
   description?: string;
+  projectType?: ProjectType;
 }
 
 export interface UpdateProjectData {
   name?: string;
   description?: string;
   lockOrientation?: boolean;
+  projectType?: ProjectType;
 }
 
 class ProjectService {
@@ -42,8 +47,10 @@ class ProjectService {
         description: project.description || '',
         pageCount: project.page_count || 0,
         lockOrientation: false,
+        projectType: project.project_type || 'other',
         title: project.title,
         page_count: project.page_count,
+        project_type: project.project_type || 'other',
         created_at: project.created_at,
         updated_at: project.updated_at,
       }));
@@ -68,7 +75,8 @@ class ProjectService {
       // Create project in backend
       const backendProject = await apiService.createProject(
         data.name.trim(),
-        data.description?.trim()
+        data.description?.trim(),
+        data.projectType || 'other'
       );
 
       // Transform backend data to match frontend interface
@@ -78,8 +86,10 @@ class ProjectService {
         description: backendProject.description || '',
         pageCount: backendProject.page_count || 0,
         lockOrientation: false,
+        projectType: backendProject.project_type || 'generic',
         title: backendProject.title,
         page_count: backendProject.page_count,
+        project_type: backendProject.project_type || 'generic',
         created_at: backendProject.created_at,
         updated_at: backendProject.updated_at,
       };
@@ -95,6 +105,7 @@ class ProjectService {
         description: data.description?.trim() || '',
         pageCount: 0,
         lockOrientation: false,
+        projectType: data.projectType || 'generic',
       };
 
       const projects = await this.getAllProjects();
@@ -114,6 +125,7 @@ class ProjectService {
       const backendProject = await apiService.updateProject(projectId, {
         title: data.name?.trim(),
         description: data.description?.trim(),
+        project_type: data.projectType,
       });
 
       // Transform backend data to match frontend interface
@@ -123,8 +135,10 @@ class ProjectService {
         description: backendProject.description || '',
         pageCount: backendProject.page_count || 0,
         lockOrientation: data.lockOrientation || false,
+        projectType: backendProject.project_type || 'generic',
         title: backendProject.title,
         page_count: backendProject.page_count,
+        project_type: backendProject.project_type || 'generic',
         created_at: backendProject.created_at,
         updated_at: backendProject.updated_at,
       };
@@ -225,7 +239,7 @@ class ProjectService {
     try {
       // Try to get project from backend first
       const backendProject = await apiService.getProject(projectId);
-      
+
       // Transform backend data to match frontend interface
       const project: Project = {
         id: backendProject.id,
@@ -233,8 +247,10 @@ class ProjectService {
         description: backendProject.description || '',
         pageCount: backendProject.page_count || 0,
         lockOrientation: false,
+        projectType: backendProject.project_type || 'generic',
         title: backendProject.title,
         page_count: backendProject.page_count,
+        project_type: backendProject.project_type || 'generic',
         created_at: backendProject.created_at,
         updated_at: backendProject.updated_at,
       };
