@@ -1,6 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useColorScheme, Platform } from 'react-native';
+import { useColorScheme, Platform, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
@@ -8,6 +8,7 @@ import { apiService } from '../utils/apiService';
 import { useEffect, useState } from 'react';
 import * as SplashScreen from 'expo-splash-screen';
 import * as Font from 'expo-font';
+import WebNavBar from '../components/WebNavBar';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -124,21 +125,23 @@ function StackLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style={getStatusBarStyle()} />
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: theme.surface,
-          },
-          headerTintColor: theme.primary,
-          headerTitleStyle: {
-            fontWeight: '600',
-            color: theme.text,
-            fontSize: 24,
-          },
-          headerShadowVisible: false,
-          headerTitleAlign: 'center',
-        }}
-      >
+      <View style={{ flex: 1 }}>
+        <WebNavBar />
+        <Stack
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: theme.surface,
+            },
+            headerTintColor: theme.primary,
+            headerTitleStyle: {
+              fontWeight: '600',
+              color: theme.text,
+              fontSize: 24,
+            },
+            headerShadowVisible: false,
+            headerTitleAlign: 'center',
+          }}
+        >
         <Stack.Screen 
           name="auth/signin" 
           options={{ 
@@ -171,15 +174,16 @@ function StackLayout() {
             presentation: 'modal',
           }} 
         />
-        <Stack.Screen 
-          name="project/[id]" 
-          options={{ 
+        <Stack.Screen
+          name="project/[id]"
+          options={{
             title: '',
             headerBackTitle: 'Back',
-            headerShown: true,
-          }} 
+            headerShown: Platform.OS !== 'web',
+          }}
         />
       </Stack>
+      </View>
     </GestureHandlerRootView>
   );
 }

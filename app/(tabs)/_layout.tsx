@@ -13,16 +13,16 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: theme.primary,
         tabBarInactiveTintColor: theme.textSecondary,
-        tabBarStyle: {
-          backgroundColor: theme.surface,
-          borderTopColor: theme.divider,
-          borderTopWidth: 1,
-          height: Platform.OS === 'web' 
-            ? 60 
-            : 49 + insets.bottom, // Base height + safe area bottom padding
-          paddingBottom: Platform.OS === 'ios' ? insets.bottom : 4,
-          paddingTop: 4,
-        },
+        tabBarStyle: Platform.OS === 'web'
+          ? { display: 'none' } // Hide tab bar on web
+          : {
+              backgroundColor: theme.surface,
+              borderTopColor: theme.divider,
+              borderTopWidth: 1,
+              height: 49 + insets.bottom, // Base height + safe area bottom padding
+              paddingBottom: Platform.OS === 'ios' ? insets.bottom : 4,
+              paddingTop: 4,
+            },
         tabBarLabelStyle: {
           fontSize: Platform.OS === 'web' ? 14 : 11,
           marginTop: -2, // Bring label closer to icon

@@ -46,13 +46,22 @@ export function useProjectPages(projectId: string) {
   };
 
   const updatePageRotation = async (pageId: string, rotation: number) => {
-    const updatedPages = capturedPages.map(page => 
-      page.id === pageId ? { ...page, rotation } : page
-    );
-    setCapturedPages(updatedPages);
-    await saveProjectPages(updatedPages);
-    
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      // Update in database first
+      await pageService.updatePage(pageId, { rotation });
+
+      // Then update local state
+      const updatedPages = capturedPages.map(page =>
+        page.id === pageId ? { ...page, rotation } : page
+      );
+      setCapturedPages(updatedPages);
+      await saveProjectPages(updatedPages);
+
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.log('Error updating page rotation:', error);
+      throw error;
+    }
   };
 
   const addPage = async (photoUri: string) => {

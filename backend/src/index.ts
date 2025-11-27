@@ -17,6 +17,7 @@ import pageRoutes from './routes/pageRoutes';
 import aiRoutes from './routes/aiRoutes';
 import userRoutes from './routes/userRoutes';
 import chapterRoutes from './routes/chapterRoutes';
+import textEnhancementRoutes from './routes/textEnhancementRoutes';
 
 // Import middleware
 import { authenticateUser } from './middleware/auth';
@@ -67,6 +68,7 @@ app.use('/api/projects', authenticateUser, projectRoutes);
 app.use('/api/pages', authenticateUser, pageRoutes);
 app.use('/api/ai', authenticateUser, aiRoutes);
 app.use('/api/chapters', authenticateUser, chapterRoutes);
+app.use('/api/text-enhancement', authenticateUser, textEnhancementRoutes);
 
 // 404 handler
 app.use((req, res) => {

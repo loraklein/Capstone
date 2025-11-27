@@ -7,8 +7,21 @@ import { Platform } from 'react-native';
 const SUPABASE_URL = 'https://bhoodtyyzsywvbxoanjg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJob29kdHl5enN5d3ZieG9hbmpnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTgzMTg5MTksImV4cCI6MjA3Mzg5NDkxOX0.OPlD0zT9gadb4kZdnxwjUKVwp453REggwYt-Emk2rzY';
 
-// Create Supabase client
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Create Supabase client with better error handling
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+  auth: {
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true,
+    // Add retry logic for token refresh
+    storage: Platform.OS === 'web' ? undefined : AsyncStorage,
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'pastforward-app',
+    },
+  },
+});
 
 interface AuthContextType {
   user: User | null;
@@ -32,13 +45,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loadSession();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('[AuthContext] Auth state changed:', event, session ? 'has session' : 'no session');
+
+      // Handle token refresh errors - don't log out immediately
+      if (event === 'TOKEN_REFRESHED' && !session) {
+        console.warn('[AuthContext] Token refresh failed, attempting to restore session');
+        // Try to get the session one more time
+        const { data: { session: restoredSession } } = await supabase.auth.getSession();
+        if (restoredSession) {
+          console.log('[AuthContext] Session restored successfully');
+          setSession(restoredSession);
+          setUser(restoredSession.user);
+          saveSession(restoredSession);
+          return;
+        }
+      }
+
+      // Only clear session on explicit sign out
+      if (event === 'SIGNED_OUT') {
+        console.log('[AuthContext] User signed out');
+        setSession(null);
+        setUser(null);
+        clearSession();
+        return;
+      }
+
+      // Update session for all other events
       setSession(session);
       setUser(session?.user ?? null);
       if (session) {
         saveSession(session);
-      } else {
-        clearSession();
       }
     });
 

@@ -16,6 +16,7 @@ import { Image } from 'expo-image';
 import { useTheme } from '../contexts/ThemeContext';
 import { MaterialIcons } from '@expo/vector-icons';
 import Icon from '../components/Icon';
+import { apiService } from '../utils/apiService';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -31,6 +32,7 @@ interface LineByLineTextEditorProps {
     photo_url?: string;
     extracted_text: string;
     edited_text?: string;
+    rotation?: number;
   };
   onClose: () => void;
   onSave: (pageId: string, editedText: string) => Promise<void>;
@@ -50,6 +52,9 @@ export default function LineByLineTextEditor({
   const { theme } = useTheme();
   const [editedText, setEditedText] = useState('');
   const [saving, setSaving] = useState(false);
+  const [fixing, setFixing] = useState(false);
+  const [showCorrectionPreview, setShowCorrectionPreview] = useState(false);
+  const [correctedText, setCorrectedText] = useState('');
 
   // Gesture values for zoom and pan
   const scale = useSharedValue(3); // Start at 3x zoom
@@ -96,8 +101,17 @@ export default function LineByLineTextEditor({
   // Pan gesture for moving zoomed image
   const panGesture = Gesture.Pan()
     .onUpdate((event) => {
-      translateX.value = savedTranslateX.value + event.translationX;
-      translateY.value = savedTranslateY.value + event.translationY;
+      // Adjust translation based on rotation angle
+      const rotationRad = ((page.rotation || 0) * Math.PI) / 180;
+      const cos = Math.cos(-rotationRad);
+      const sin = Math.sin(-rotationRad);
+
+      // Apply inverse rotation to translation deltas
+      const adjustedX = event.translationX * cos - event.translationY * sin;
+      const adjustedY = event.translationX * sin + event.translationY * cos;
+
+      translateX.value = savedTranslateX.value + adjustedX;
+      translateY.value = savedTranslateY.value + adjustedY;
     })
     .onEnd(() => {
       savedTranslateX.value = translateX.value;
@@ -125,6 +139,7 @@ export default function LineByLineTextEditor({
   // Animated style for the image
   const animatedImageStyle = useAnimatedStyle(() => ({
     transform: [
+      { rotate: `${page.rotation || 0}deg` },
       { scale: scale.value },
       { translateX: translateX.value },
       { translateY: translateY.value },
@@ -145,6 +160,8 @@ export default function LineByLineTextEditor({
 
   const handleCancel = () => {
     setEditedText(page.edited_text || page.extracted_text || '');
+    setShowCorrectionPreview(false);
+    setCorrectedText('');
     onClose();
   };
 
@@ -175,6 +192,31 @@ export default function LineByLineTextEditor({
     savedScale.value = 1;
     savedTranslateX.value = 0;
     savedTranslateY.value = 0;
+  };
+
+  const handleFixText = async () => {
+    try {
+      setFixing(true);
+      const result = await apiService.correctPageText(page.id);
+      setCorrectedText(result.corrected);
+      setShowCorrectionPreview(true);
+    } catch (error) {
+      console.error('Error correcting text:', error);
+      // TODO: Show error message to user
+    } finally {
+      setFixing(false);
+    }
+  };
+
+  const handleAcceptCorrection = () => {
+    setEditedText(correctedText);
+    setShowCorrectionPreview(false);
+    setCorrectedText('');
+  };
+
+  const handleRejectCorrection = () => {
+    setShowCorrectionPreview(false);
+    setCorrectedText('');
   };
 
   if (!page.extracted_text) {
@@ -313,6 +355,28 @@ export default function LineByLineTextEditor({
               <Text style={[styles.footerButtonText, { color: theme.text }]}>Cancel</Text>
             </Pressable>
 
+            {IS_LARGE_SCREEN && (
+              <Pressable
+                style={[
+                  styles.footerButtonWide,
+                  { backgroundColor: theme.accent || theme.secondary, borderColor: theme.border }
+                ]}
+                onPress={handleFixText}
+                disabled={fixing || !editedText.trim()}
+              >
+                {fixing ? (
+                  <ActivityIndicator color={theme.text} />
+                ) : (
+                  <View style={styles.buttonWithIcon}>
+                    <Icon name="auto-awesome" size={18} color={theme.text} />
+                    <Text style={[styles.footerButtonText, { color: theme.text, marginLeft: 6 }]}>
+                      Auto Correct
+                    </Text>
+                  </View>
+                )}
+              </Pressable>
+            )}
+
             <Pressable
               style={[
                 IS_LARGE_SCREEN ? styles.footerButtonWide : styles.footerButton,
@@ -326,12 +390,80 @@ export default function LineByLineTextEditor({
                 <ActivityIndicator color={theme.primaryText} />
               ) : (
                 <Text style={[styles.footerButtonText, { color: theme.primaryText }]}>
-                  {IS_LARGE_SCREEN ? 'Save Changes' : 'Save All Changes'}
+                  Save Changes
                 </Text>
               )}
             </Pressable>
           </View>
         </View>
+
+        {/* Correction Preview Modal - Web only */}
+        {IS_LARGE_SCREEN && showCorrectionPreview && (
+          <Modal
+            visible={showCorrectionPreview}
+            transparent={true}
+            animationType="fade"
+            onRequestClose={handleRejectCorrection}
+          >
+            <View style={styles.correctionOverlay}>
+              <View style={[styles.correctionModal, { backgroundColor: theme.background }]}>
+                <View style={[styles.correctionHeader, { borderBottomColor: theme.divider }]}>
+                  <Text style={[styles.correctionTitle, { color: theme.text }]}>
+                    Text Correction Preview
+                  </Text>
+                  <Pressable onPress={handleRejectCorrection} style={styles.correctionCloseButton}>
+                    <Icon name="close" size={24} color={theme.text} />
+                  </Pressable>
+                </View>
+
+                <ScrollView style={styles.correctionContent}>
+                  <View style={styles.correctionComparison}>
+                    <View style={styles.correctionColumn}>
+                      <Text style={[styles.correctionColumnTitle, { color: theme.textSecondary }]}>
+                        Original Text
+                      </Text>
+                      <View style={[styles.correctionTextBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                        <Text style={[styles.correctionText, { color: theme.text }]}>
+                          {editedText}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View style={styles.correctionColumn}>
+                      <Text style={[styles.correctionColumnTitle, { color: theme.textSecondary }]}>
+                        Corrected Text
+                      </Text>
+                      <View style={[styles.correctionTextBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                        <Text style={[styles.correctionText, { color: theme.text }]}>
+                          {correctedText}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+
+                  <Text style={[styles.correctionHint, { color: theme.textTertiary }]}>
+                    Review the changes and choose to accept or reject the corrections
+                  </Text>
+                </ScrollView>
+
+                <View style={[styles.correctionFooter, { borderTopColor: theme.divider }]}>
+                  <Pressable
+                    style={[styles.correctionButton, { backgroundColor: theme.secondary, borderColor: theme.border }]}
+                    onPress={handleRejectCorrection}
+                  >
+                    <Text style={[styles.correctionButtonText, { color: theme.text }]}>Reject</Text>
+                  </Pressable>
+                  <Pressable
+                    style={[styles.correctionButton, styles.acceptButton, { backgroundColor: theme.primary }]}
+                    onPress={handleAcceptCorrection}
+                  >
+                    <Text style={[styles.correctionButtonText, { color: theme.primaryText }]}>Accept</Text>
+                  </Pressable>
+                </View>
+              </View>
+            </View>
+          </Modal>
+        )}
       </View>
     </Modal>
   );
@@ -478,7 +610,8 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     flex: 1,
-    paddingVertical: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -497,7 +630,7 @@ const styles = StyleSheet.create({
     borderWidth: 0,
   },
   footerButtonText: {
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   emptyState: {
@@ -517,6 +650,91 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   buttonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  correctionOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  correctionModal: {
+    width: '100%',
+    maxWidth: 900,
+    maxHeight: '90%',
+    borderRadius: 12,
+    overflow: 'hidden',
+  },
+  correctionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+  },
+  correctionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  correctionCloseButton: {
+    padding: 4,
+  },
+  correctionContent: {
+    padding: 16,
+  },
+  correctionComparison: {
+    flexDirection: IS_LARGE_SCREEN ? 'row' : 'column',
+    gap: 16,
+  },
+  correctionColumn: {
+    flex: 1,
+  },
+  correctionColumnTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    marginBottom: 8,
+  },
+  correctionTextBox: {
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    minHeight: 200,
+  },
+  correctionText: {
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  correctionHint: {
+    fontSize: 12,
+    marginTop: 16,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
+  correctionFooter: {
+    flexDirection: 'row',
+    gap: 12,
+    padding: 16,
+    borderTopWidth: 1,
+  },
+  correctionButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  acceptButton: {
+    borderWidth: 0,
+  },
+  correctionButtonText: {
     fontSize: 16,
     fontWeight: '600',
   },

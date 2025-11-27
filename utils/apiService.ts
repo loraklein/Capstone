@@ -223,6 +223,25 @@ export class ApiService {
       body: JSON.stringify({ chapterIds }),
     });
   }
+
+  // Text enhancement
+  async correctPageText(pageId: string, provider?: string): Promise<any> {
+    return this.makeRequest(`/text-enhancement/pages/${pageId}/correct`, {
+      method: 'POST',
+      body: JSON.stringify({ provider }),
+    });
+  }
+
+  async applyTextCorrection(pageId: string, correctedText: string): Promise<any> {
+    return this.makeRequest(`/text-enhancement/pages/${pageId}/apply`, {
+      method: 'PUT',
+      body: JSON.stringify({ correctedText }),
+    });
+  }
+
+  async getTextEnhancementProviders(): Promise<{ providers: string[] }> {
+    return this.makeRequest('/text-enhancement/providers');
+  }
 }
 
 // Export singleton instance

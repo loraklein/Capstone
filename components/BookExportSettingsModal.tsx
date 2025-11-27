@@ -29,6 +29,8 @@ export interface BookSettings {
   fontSize: number;
   includeBackCover: boolean;
   coverTemplate: 'simple' | 'elegant' | 'modern';
+  addPageBreaks: boolean;
+  includeTableOfContents: boolean;
 }
 
 const BOOK_SIZES = [
@@ -54,6 +56,8 @@ export default function BookExportSettingsModal({
     fontSize: 11,
     includeBackCover: true,
     coverTemplate: 'simple',
+    addPageBreaks: true,
+    includeTableOfContents: true,
   });
 
   const updateSetting = <K extends keyof BookSettings>(
@@ -282,6 +286,68 @@ export default function BookExportSettingsModal({
                       {
                         backgroundColor: theme.surface,
                         transform: [{ translateX: settings.includeBackCover ? 20 : 0 }],
+                      },
+                    ]}
+                  />
+                </View>
+              </Pressable>
+
+              {/* Page Breaks before Sections */}
+              <Pressable
+                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border, marginTop: 12 }]}
+                onPress={() => updateSetting('addPageBreaks', !settings.addPageBreaks)}
+              >
+                <View style={styles.toggleLeft}>
+                  <Text style={[styles.toggleLabel, { color: theme.text }]}>Add page breaks before sections</Text>
+                  <Text style={[styles.toggleDescription, { color: theme.textSecondary }]}>
+                    Start each chapter/section on a new page
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.toggle,
+                    {
+                      backgroundColor: settings.addPageBreaks ? theme.primary : theme.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleThumb,
+                      {
+                        backgroundColor: theme.surface,
+                        transform: [{ translateX: settings.addPageBreaks ? 20 : 0 }],
+                      },
+                    ]}
+                  />
+                </View>
+              </Pressable>
+
+              {/* Table of Contents */}
+              <Pressable
+                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border, marginTop: 12 }]}
+                onPress={() => updateSetting('includeTableOfContents', !settings.includeTableOfContents)}
+              >
+                <View style={styles.toggleLeft}>
+                  <Text style={[styles.toggleLabel, { color: theme.text }]}>Include table of contents</Text>
+                  <Text style={[styles.toggleDescription, { color: theme.textSecondary }]}>
+                    Add a TOC listing all sections with page numbers
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.toggle,
+                    {
+                      backgroundColor: settings.includeTableOfContents ? theme.primary : theme.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleThumb,
+                      {
+                        backgroundColor: theme.surface,
+                        transform: [{ translateX: settings.includeTableOfContents ? 20 : 0 }],
                       },
                     ]}
                   />

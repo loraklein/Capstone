@@ -67,6 +67,27 @@ const generateDynamicStyles = (options: RenderOptions): string => {
   `;
 };
 
+const renderTableOfContents = (chapters: any[]): string => {
+  if (chapters.length === 0) return '';
+
+  const tocItems = chapters.map(chapter => `
+    <div class="toc-item">
+      <span class="toc-title">${escapeHtml(chapter.title)}</span>
+      <span class="toc-dots"></span>
+      <span class="toc-page">${chapter.start_page_number}</span>
+    </div>
+  `).join('\n');
+
+  return `
+    <section class="table-of-contents page-break">
+      <h2>Table of Contents</h2>
+      <div class="toc-list">
+        ${tocItems}
+      </div>
+    </section>
+  `;
+};
+
 const renderTitlePage = (frontMatter: BookFrontMatter, bookSettings?: BookSettings): string => {
   const { titlePage, description } = frontMatter;
 
@@ -134,14 +155,39 @@ const renderPage = (page: BookExportPage, options: RenderOptions): string => {
 };
 
 export function renderBookHtml(payload: BookExportPayload, options: RenderOptions = {}): string {
-  const pagesHtml = payload.pages.map((page) => renderPage(page, options)).join('\n');
   const includeImages = options.includeImages ?? false;
+  const chapters = payload.chapters || [];
+  const addPageBreaks = options.bookSettings?.addPageBreaks ?? false;
+
+  // Render pages with chapter headings
+  const pagesHtml = payload.pages.map((page) => {
+    // Check if this page starts a chapter
+    const chapter = chapters.find(c => c.start_page_number === page.pageNumber);
+    let html = '';
+
+    if (chapter) {
+      const pageBreakClass = addPageBreaks ? ' chapter-break' : '';
+      html += `
+        <div class="chapter-heading${pageBreakClass}">
+          <h2>${escapeHtml(chapter.title)}</h2>
+          ${chapter.description ? `<p class="chapter-description">${escapeHtml(chapter.description)}</p>` : ''}
+        </div>
+      `;
+    }
+
+    html += renderPage(page, options);
+    return html;
+  }).join('\n');
 
   // For continuous flow (book/custom PDF), wrap content in a container
   const isContinuousFlow = !!(options.bookSettings || options.customPdfSettings);
   const contentHtml = isContinuousFlow
     ? `<div class="book-content">\n${pagesHtml}\n</div>`
     : pagesHtml;
+
+  // Generate table of contents if enabled and there are chapters
+  const includeTOC = options.bookSettings?.includeTableOfContents && chapters.length > 0;
+  const tocHtml = includeTOC ? renderTableOfContents(chapters) : '';
 
   return `
     <!doctype html>
@@ -221,6 +267,66 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             text-align: justify;
             hyphenate-character: "-";
             hyphens: auto;
+          }
+          /* Chapter headings */
+          .chapter-heading {
+            margin-top: 3rem;
+            margin-bottom: 2rem;
+          }
+          .chapter-heading h2 {
+            font-size: 2rem;
+            margin: 0 0 0.5rem 0;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+          }
+          .chapter-description {
+            font-style: italic;
+            color: #5a4c43;
+            margin: 0;
+          }
+          /* Page break before chapters */
+          .chapter-break {
+            page-break-before: always;
+            margin-top: 0;
+          }
+          /* Table of Contents */
+          .table-of-contents {
+            padding: 4rem 2rem;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+          }
+          .table-of-contents h2 {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+          }
+          .toc-list {
+            max-width: 40rem;
+            margin: 0 auto;
+            width: 100%;
+          }
+          .toc-item {
+            display: flex;
+            align-items: baseline;
+            margin-bottom: 0.75rem;
+            font-size: 1rem;
+          }
+          .toc-title {
+            flex-shrink: 0;
+          }
+          .toc-dots {
+            flex-grow: 1;
+            border-bottom: 1px dotted #5a4c43;
+            margin: 0 0.5rem;
+            min-width: 2rem;
+          }
+          .toc-page {
+            flex-shrink: 0;
+            font-weight: 600;
           }
           /* Regular PDF sections */
           .content-page {
@@ -310,6 +416,7 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
       </head>
       <body>
         ${renderTitlePage(payload.frontMatter, options.bookSettings)}
+        ${tocHtml}
         ${contentHtml}
       </body>
     </html>

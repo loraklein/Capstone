@@ -247,6 +247,7 @@ export default function ProjectDetailScreen() {
         pageCount={capturedPages.length}
         showAddButton={capturedPages.length > 0 && !isReorderMode}
         onAddPage={handleAddPage}
+        onBack={Platform.OS !== 'web' ? () => router.push('/(tabs)') : undefined}
         onManageChapters={capturedPages.length > 0 ? () => setShowChapterModal(true) : undefined}
       />
 
@@ -449,6 +450,7 @@ export default function ProjectDetailScreen() {
             photo_url: editingPage.photo_url,
             extracted_text: editingPage.extracted_text || '',
             edited_text: editingPage.edited_text,
+            rotation: editingPage.rotation,
           }}
           onClose={handleCloseTextEditor}
           onSave={handleSaveEditedText}

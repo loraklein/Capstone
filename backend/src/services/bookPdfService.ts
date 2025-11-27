@@ -21,6 +21,8 @@ export interface BookSettings {
   fontSize?: number;
   includeBackCover?: boolean;
   coverTemplate?: 'simple' | 'elegant' | 'modern';
+  addPageBreaks?: boolean;
+  includeTableOfContents?: boolean;
 }
 
 interface BookPdfOptions {

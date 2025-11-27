@@ -45,6 +45,16 @@ export interface BookBackMatter {
   notes?: string | null;
 }
 
+export interface Chapter {
+  id: string;
+  title: string;
+  start_page_number: number;
+  end_page_number: number | null;
+  chapter_order: number;
+  chapter_type: string;
+  description: string | null;
+}
+
 export interface BookExportPayload {
   project: {
     id: string;
@@ -61,6 +71,7 @@ export interface BookExportPayload {
   };
   frontMatter: BookFrontMatter;
   pages: BookExportPage[];
+  chapters: Chapter[];
   backMatter: BookBackMatter;
   combinedText: string;
 }
@@ -140,6 +151,23 @@ export async function buildBookExport(projectId: string, userId: string): Promis
   const textPageCount = exportPages.filter((page) => page.finalText.length > 0).length;
   const hasImages = exportPages.some((page) => Boolean(page.photoUrl));
 
+  // Fetch chapters for this project
+  const { data: chapters } = await supabase
+    .from('chapters')
+    .select('id, title, start_page_number, end_page_number, chapter_order, chapter_type, description')
+    .eq('project_id', projectId)
+    .order('chapter_order', { ascending: true });
+
+  const exportChapters: Chapter[] = (chapters ?? []).map(chapter => ({
+    id: chapter.id,
+    title: chapter.title,
+    start_page_number: chapter.start_page_number,
+    end_page_number: chapter.end_page_number,
+    chapter_order: chapter.chapter_order,
+    chapter_type: chapter.chapter_type,
+    description: chapter.description,
+  }));
+
   const title = project.name || 'Untitled Project';
   const description = trimOrNull(project.description);
 
@@ -179,6 +207,7 @@ export async function buildBookExport(projectId: string, userId: string): Promis
     },
     frontMatter,
     pages: exportPages,
+    chapters: exportChapters,
     backMatter,
     combinedText,
   };
