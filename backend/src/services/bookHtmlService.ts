@@ -55,13 +55,21 @@ const generateDynamicStyles = (options: RenderOptions): string => {
     body {
       font-family: ${fontFamily};
     }
-    p {
+    body * {
+      font-family: ${fontFamily};
+    }
+    p, li, h3, .recipe-title, .date-header, .section-header {
       line-height: ${lineHeight};
       font-size: ${fontSize}pt;
+      font-family: ${fontFamily};
     }
     .page-text p {
       font-size: ${fontSize}pt;
       line-height: ${lineHeight};
+      font-family: ${fontFamily};
+    }
+    h1, h2 {
+      font-family: ${fontFamily};
     }
     ${pageNumberStyles}
   `;
@@ -198,9 +206,27 @@ const parseNaturalFormatting = (text: string): string => {
   return result.join('\n');
 };
 
+const renderPlainText = (text: string): string => {
+  if (!text) return '';
+
+  // Simple paragraph wrapping - split on double newlines for paragraphs
+  const paragraphs = text.split(/\n\n+/);
+  return paragraphs
+    .map(para => {
+      const trimmed = para.trim();
+      if (!trimmed) return '';
+      // Replace single newlines with spaces within paragraphs
+      const cleaned = trimmed.replace(/\n/g, ' ');
+      return `<p>${escapeHtml(cleaned)}</p>`;
+    })
+    .filter(p => p)
+    .join('\n');
+};
+
 const renderPage = (page: BookExportPage, options: RenderOptions): string => {
+  // Use plain text formatting for all PDFs (no smart detection)
   const text = page.finalText
-    ? parseNaturalFormatting(page.finalText)
+    ? renderPlainText(page.finalText)
     : '<p class="placeholder">No text available for this page.</p>';
 
   const showImages = options.includeImages ?? false;
@@ -315,10 +341,14 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             padding: 4rem 2rem;
           }
           .title-page h1 {
-            font-size: 3rem;
+            font-size: 2.5rem;
             margin-bottom: 1.5rem;
-            letter-spacing: 0.08em;
+            letter-spacing: 0;
             text-transform: uppercase;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            max-width: 100%;
+            padding: 0 1rem;
           }
           .title-page .subtitle {
             font-size: 1.5rem;
@@ -345,7 +375,7 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             padding: 0;
           }
           .book-content p {
-            text-align: justify;
+            text-align: left;
             hyphenate-character: "-";
             hyphens: auto;
           }
@@ -453,7 +483,7 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             font-size: 1rem;
           }
           .page-text p {
-            text-align: justify;
+            text-align: left;
             hyphenate-character: "-";
             hyphens: auto;
           }
@@ -485,14 +515,12 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
           }
           /* Natural formatting styles for recipes and structured content */
           .recipe-title {
-            font-size: 1.75rem;
             font-weight: 700;
             margin: 0 0 1.5rem 0;
-            text-align: center;
+            text-align: left;
             color: #1a1410;
           }
           .date-header {
-            font-size: 1.1rem;
             margin: 2rem 0 1rem 0;
             color: #3a3028;
             font-style: italic;
@@ -501,7 +529,6 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             font-weight: 600;
           }
           .section-header {
-            font-size: 1.25rem;
             margin: 1.5rem 0 0.75rem 0;
             color: #2a2318;
           }

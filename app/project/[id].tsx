@@ -24,6 +24,7 @@ import ReviewProgressBar from '../../components/ReviewProgressBar';
 import PhotoSourceSelector from '../../components/PhotoSourceSelector';
 import PhotoViewer from '../../components/PhotoViewer';
 import ProjectHeader from '../../components/ProjectHeader';
+import UploadProgressModal from '../../components/UploadProgressModal';
 import WebFeaturesBanner from '../../components/WebFeaturesBanner';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useCameraManagement } from '../../hooks/useCameraManagement';
@@ -56,7 +57,7 @@ export default function ProjectDetailScreen() {
   const { capturedPages, addPage, deletePage, reorderPagesWithArray, updatePageRotation, processPageWithAI, batchProcessProject, reloadPages } = useProjectPages(projectId);
   const { refreshProjects } = useProjects();
   const { isGenerating, generatePdf } = usePdfGeneration(projectId);
-  const { showCamera, handleAddPage, handleCameraCapture, handleCameraClose } = useCameraManagement({ addPage });
+  const { showCamera, handleAddPage, handleCameraCapture, handleCameraClose, uploadProgress } = useCameraManagement({ addPage });
   const { showPhotoViewer, selectedPage, handleViewPage, handleClosePhotoViewer } = usePhotoViewer();
   const { showDeleteModal, handleDeletePage, confirmDelete, cancelDelete } = useDeleteConfirmation({ deletePage, refreshProjects });
   const { isReorderMode, handleToggleReorderMode } = useReorderMode();
@@ -124,6 +125,12 @@ export default function ProjectDetailScreen() {
   };
 
   const hasPagesWithText = capturedPages.some(page => page.edited_text || page.extracted_text);
+
+  // Calculate project states for progressive disclosure
+  const hasUnprocessedPages = capturedPages.some(page => !page.extracted_text && !page.edited_text);
+  const hasProcessedPages = capturedPages.some(page => page.extracted_text || page.edited_text);
+  const hasUnreviewedPages = reviewStats.unreviewed > 0 || reviewStats.needsAttention > 0;
+  const isReviewingComplete = reviewStats.total > 0 && reviewStats.percentComplete >= 80;
 
   // Load review statistics
   useEffect(() => {
@@ -292,11 +299,10 @@ export default function ProjectDetailScreen() {
         showAddButton={capturedPages.length > 0 && !isReorderMode}
         onAddPage={handleAddPage}
         onBack={Platform.OS !== 'web' ? () => router.push('/(tabs)') : undefined}
-        onManageChapters={capturedPages.length > 0 ? () => setShowChapterModal(true) : undefined}
       />
 
-      {/* Review Progress Bar */}
-      {capturedPages.length > 0 && reviewStats.total > 0 && (
+      {/* Review Progress Bar - Only show when all pages are processed */}
+      {!hasUnprocessedPages && hasProcessedPages && reviewStats.total > 0 && (
         <ReviewProgressBar
           total={reviewStats.total}
           reviewed={reviewStats.reviewed}
@@ -308,124 +314,150 @@ export default function ProjectDetailScreen() {
         />
       )}
 
-      {capturedPages.length > 1 && (
+      {/* Progressive Action Buttons */}
+      {capturedPages.length > 0 && (
         <View style={[styles.reorderSection, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
-          {/* Row 1: Editing Actions */}
-          <View style={styles.buttonRow}>
-            <Pressable
-              style={[
-                styles.reorderButton,
-                { backgroundColor: isReorderMode ? theme.primary : 'transparent' }
-              ]}
-              onPress={handleToggleReorderMode}
-            >
-              <Icon
-                name={isReorderMode ? "check" : "reorder"}
-                size={16}
-                color={isReorderMode ? "white" : theme.primary}
-              />
-              <Text style={[
-                styles.reorderButtonText,
-                { color: isReorderMode ? "white" : theme.primary }
-              ]}>
-                {isReorderMode ? "Done" : "Reorder"}
-              </Text>
-            </Pressable>
 
-            <Pressable
-              style={[
-                styles.reorderButton,
-                {
-                  backgroundColor: isBatchProcessing ? theme.primary : 'transparent',
-                  opacity: isBatchProcessing ? 0.6 : 1
-                }
-              ]}
-              onPress={handleBatchProcess}
-              disabled={isBatchProcessing || capturedPages.length === 0}
-            >
-              <Icon
-                name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"}
-                size={16}
-                color={isBatchProcessing ? "white" : theme.primary}
-              />
-              <Text style={[
-                styles.reorderButtonText,
-                { color: isBatchProcessing ? "white" : theme.primary }
-              ]}>
-                {isBatchProcessing ? 'Processing...' : 'Process All'}
-              </Text>
-            </Pressable>
-          </View>
-
-          {/* Row 2: View/Export/Navigation Actions */}
-          {(hasPagesWithText || hasPagesWithPhotos || reviewStats.unreviewed > 0 || reviewStats.needsAttention > 0) && (
-            <View style={[styles.buttonRow, { marginTop: 8 }]}>
-              {/* Next Unreviewed Button */}
-              {(reviewStats.unreviewed > 0 || reviewStats.needsAttention > 0) && (
-                <Pressable
-                  style={[
-                    styles.reorderButton,
-                    { backgroundColor: theme.primary }
-                  ]}
-                  onPress={handleNextUnreviewed}
-                >
-                  <Icon
-                    name="arrow-forward"
-                    size={16}
-                    color="white"
-                  />
-                  <Text style={[
-                    styles.reorderButtonText,
-                    { color: "white" }
-                  ]}>
-                    Next Unreviewed
-                  </Text>
-                </Pressable>
-              )}
-
-              {hasPagesWithText && (
-                <Pressable
-                  style={[
-                    styles.reorderButton,
-                    { backgroundColor: 'transparent' }
-                  ]}
-                  onPress={handleViewCombinedText}
-                >
-                  <Icon
-                    name="description"
-                    size={16}
-                    color={theme.primary}
-                  />
-                  <Text style={[
-                    styles.reorderButtonText,
-                    { color: theme.primary }
-                  ]}>
-                    View All Text
-                  </Text>
-                </Pressable>
-              )}
-
-              {hasPagesWithPhotos && (
-                <ExportPdfButton
-                  onPress={handleExportClick}
-                  disabled={isGenerating}
-                  isGenerating={isGenerating}
+          {/* STAGE 1: Initial - Process Pages */}
+          {hasUnprocessedPages && (
+            <View style={styles.buttonRow}>
+              <Pressable
+                style={[
+                  styles.primaryActionButton,
+                  {
+                    backgroundColor: isBatchProcessing ? theme.primary : theme.primary,
+                    opacity: isBatchProcessing ? 0.6 : 1
+                  }
+                ]}
+                onPress={handleBatchProcess}
+                disabled={isBatchProcessing || capturedPages.length === 0}
+              >
+                <Icon
+                  name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"}
+                  size={20}
+                  color="white"
                 />
-              )}
+                <Text style={styles.primaryActionButtonText}>
+                  {isBatchProcessing ? 'Processing...' : 'Process All with AI'}
+                </Text>
+              </Pressable>
             </View>
+          )}
+
+          {/* STAGE 2: Processing Complete - Review Text */}
+          {!hasUnprocessedPages && hasProcessedPages && (
+            <>
+              {/* Primary action: Next Unreviewed (if any unreviewed pages) */}
+              {hasUnreviewedPages && (
+                <View style={styles.buttonRow}>
+                  <Pressable
+                    style={[styles.primaryActionButton, { backgroundColor: theme.primary }]}
+                    onPress={handleNextUnreviewed}
+                  >
+                    <Icon name="arrow-forward" size={20} color="white" />
+                    <Text style={styles.primaryActionButtonText}>
+                      Review Next Page
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {/* Secondary actions row */}
+              <View style={[styles.buttonRow, { marginTop: hasUnreviewedPages ? 8 : 0 }]}>
+                {/* Process All - if there are still unprocessed pages */}
+                {hasUnprocessedPages && (
+                  <Pressable
+                    style={[
+                      styles.secondaryActionButton,
+                      {
+                        backgroundColor: isBatchProcessing ? theme.primary : 'transparent',
+                        opacity: isBatchProcessing ? 0.6 : 1
+                      }
+                    ]}
+                    onPress={handleBatchProcess}
+                    disabled={isBatchProcessing}
+                  >
+                    <Icon
+                      name={isBatchProcessing ? "hourglass-empty" : "auto-awesome"}
+                      size={16}
+                      color={isBatchProcessing ? "white" : theme.primary}
+                    />
+                    <Text style={[
+                      styles.secondaryActionButtonText,
+                      { color: isBatchProcessing ? "white" : theme.primary }
+                    ]}>
+                      {isBatchProcessing ? 'Processing...' : 'Process All'}
+                    </Text>
+                  </Pressable>
+                )}
+
+                {/* View All Text */}
+                {hasPagesWithText && (
+                  <Pressable
+                    style={styles.secondaryActionButton}
+                    onPress={handleViewCombinedText}
+                  >
+                    <Icon name="description" size={16} color={theme.primary} />
+                    <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
+                      View All Text
+                    </Text>
+                  </Pressable>
+                )}
+
+                {/* Reorder - show after some reviewing is done */}
+                {isReviewingComplete && capturedPages.length > 1 && (
+                  <Pressable
+                    style={[
+                      styles.secondaryActionButton,
+                      { backgroundColor: isReorderMode ? theme.primary : 'transparent' }
+                    ]}
+                    onPress={handleToggleReorderMode}
+                  >
+                    <Icon
+                      name={isReorderMode ? "check" : "reorder"}
+                      size={16}
+                      color={isReorderMode ? "white" : theme.primary}
+                    />
+                    <Text style={[
+                      styles.secondaryActionButtonText,
+                      { color: isReorderMode ? "white" : theme.primary }
+                    ]}>
+                      {isReorderMode ? "Done" : "Reorder"}
+                    </Text>
+                  </Pressable>
+                )}
+              </View>
+
+              {/* STAGE 3: Ready to Organize and Export (show when reviewing is mostly done) */}
+              {isReviewingComplete && (
+                <View style={[styles.buttonRow, { marginTop: 8 }]}>
+                  {/* Organize Sections */}
+                  <Pressable
+                    style={[styles.secondaryActionButton, { borderColor: theme.primary, borderWidth: 2 }]}
+                    onPress={() => setShowChapterModal(true)}
+                  >
+                    <Icon name="bookmark" size={16} color={theme.primary} />
+                    <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
+                      Organize Sections
+                    </Text>
+                  </Pressable>
+
+                  {/* Export PDF */}
+                  {hasPagesWithPhotos && (
+                    <ExportPdfButton
+                      onPress={handleExportClick}
+                      disabled={isGenerating}
+                      isGenerating={isGenerating}
+                    />
+                  )}
+                </View>
+              )}
+            </>
           )}
         </View>
       )}
 
-      {capturedPages.length === 1 && hasPagesWithPhotos && (
-        <View style={[styles.exportSection, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
-          <ExportPdfButton
-            onPress={handleExportClick}
-            disabled={isGenerating}
-            isGenerating={isGenerating}
-          />
-        </View>
-      )}
+      {/* Single page handling removed - handled in main progressive section above */}
 
       {/* Web Features Banner - shown once after AI processing */}
       {showWebBanner && (
@@ -503,6 +535,8 @@ export default function ProjectDetailScreen() {
         onCapture={handleCameraCapture}
         onClose={handleCameraClose}
       />
+
+      <UploadProgressModal progress={uploadProgress} />
 
       <PhotoViewer
         visible={showPhotoViewer}
@@ -590,6 +624,38 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
     alignItems: 'center',
     gap: 12,
+    flexWrap: 'wrap',
+  },
+  primaryActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 10,
+    flex: 1,
+    minWidth: 200,
+  },
+  primaryActionButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: 'white',
+  },
+  secondaryActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  secondaryActionButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
   reorderButton: {
     flexDirection: 'row',
@@ -604,7 +670,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
-
   exportSection: {
     paddingHorizontal: 16,
     paddingVertical: 12,

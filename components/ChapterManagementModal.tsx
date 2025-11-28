@@ -36,6 +36,9 @@ export default function ChapterManagementModal({
   const [isLoading, setIsLoading] = useState(false);
   const [editingChapter, setEditingChapter] = useState<Chapter | null>(null);
   const [isCreating, setIsCreating] = useState(false);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
+  const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Form state
   const [title, setTitle] = useState('');
@@ -57,7 +60,11 @@ export default function ChapterManagementModal({
       setChapters(data);
     } catch (error) {
       console.error('Error loading chapters:', error);
-      Alert.alert('Error', 'Failed to load chapters');
+      if (Platform.OS === 'web') {
+        window.alert('Failed to load chapters');
+      } else {
+        Alert.alert('Error', 'Failed to load chapters');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -95,7 +102,11 @@ export default function ChapterManagementModal({
 
   const handleSave = async () => {
     if (!title.trim() || !startPage.trim()) {
-      Alert.alert('Error', 'Title and start page are required');
+      if (Platform.OS === 'web') {
+        window.alert('Title and start page are required');
+      } else {
+        Alert.alert('Error', 'Title and start page are required');
+      }
       return;
     }
 
@@ -103,12 +114,20 @@ export default function ChapterManagementModal({
     const endPageNum = endPage ? parseInt(endPage) : undefined;
 
     if (isNaN(startPageNum) || startPageNum < 1 || startPageNum > totalPages) {
-      Alert.alert('Error', `Start page must be between 1 and ${totalPages}`);
+      if (Platform.OS === 'web') {
+        window.alert(`Start page must be between 1 and ${totalPages}`);
+      } else {
+        Alert.alert('Error', `Start page must be between 1 and ${totalPages}`);
+      }
       return;
     }
 
     if (endPageNum !== undefined && (isNaN(endPageNum) || endPageNum < startPageNum || endPageNum > totalPages)) {
-      Alert.alert('Error', `End page must be between start page and ${totalPages}`);
+      if (Platform.OS === 'web') {
+        window.alert(`End page must be between start page and ${totalPages}`);
+      } else {
+        Alert.alert('Error', `End page must be between start page and ${totalPages}`);
+      }
       return;
     }
 
@@ -140,37 +159,152 @@ export default function ChapterManagementModal({
       onChaptersUpdated?.();
     } catch (error) {
       console.error('Error saving chapter:', error);
-      Alert.alert('Error', 'Failed to save chapter');
+      if (Platform.OS === 'web') {
+        window.alert('Failed to save chapter');
+      } else {
+        Alert.alert('Error', 'Failed to save chapter');
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const handleDelete = async (chapter: Chapter) => {
-    Alert.alert(
-      'Delete Section',
-      `Are you sure you want to delete "${chapter.title}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              setIsLoading(true);
-              await apiService.deleteChapter(chapter.id);
-              await loadChapters();
-              onChaptersUpdated?.();
-            } catch (error) {
-              console.error('Error deleting chapter:', error);
-              Alert.alert('Error', 'Failed to delete chapter');
-            } finally {
-              setIsLoading(false);
-            }
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(`Are you sure you want to delete "${chapter.title}"?`);
+      if (!confirmed) return;
+
+      try {
+        setIsLoading(true);
+        await apiService.deleteChapter(chapter.id);
+        await loadChapters();
+        onChaptersUpdated?.();
+      } catch (error) {
+        console.error('Error deleting chapter:', error);
+        window.alert('Failed to delete chapter');
+      } finally {
+        setIsLoading(false);
+      }
+    } else {
+      Alert.alert(
+        'Delete Section',
+        `Are you sure you want to delete "${chapter.title}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                setIsLoading(true);
+                await apiService.deleteChapter(chapter.id);
+                await loadChapters();
+                onChaptersUpdated?.();
+              } catch (error) {
+                console.error('Error deleting chapter:', error);
+                Alert.alert('Error', 'Failed to delete chapter');
+              } finally {
+                setIsLoading(false);
+              }
+            },
           },
-        },
-      ]
-    );
+        ]
+      );
+    }
+  };
+
+  const handleGetSuggestions = async () => {
+    try {
+      setIsLoadingSuggestions(true);
+      const data = await apiService.getSuggestedChapters(projectId);
+      setSuggestions(data);
+      setShowSuggestions(true);
+    } catch (error) {
+      console.error('Error getting suggestions:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to get chapter suggestions');
+      } else {
+        Alert.alert('Error', 'Failed to get chapter suggestions');
+      }
+    } finally {
+      setIsLoadingSuggestions(false);
+    }
+  };
+
+  const handleAcceptSuggestion = async (suggestion: any) => {
+    try {
+      setIsLoading(true);
+      await apiService.createChapter(projectId, {
+        title: suggestion.title,
+        start_page_number: suggestion.start_page_number,
+        end_page_number: suggestion.end_page_number,
+        chapter_type: suggestion.chapter_type,
+        description: suggestion.description,
+      });
+      await loadChapters();
+      onChaptersUpdated?.();
+      // Remove accepted suggestion from list
+      setSuggestions(prev => prev.filter(s => s !== suggestion));
+    } catch (error) {
+      console.error('Error accepting suggestion:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to create chapter');
+      } else {
+        Alert.alert('Error', 'Failed to create chapter');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAcceptAllSuggestions = async () => {
+    try {
+      setIsLoading(true);
+      for (const suggestion of suggestions) {
+        await apiService.createChapter(projectId, {
+          title: suggestion.title,
+          start_page_number: suggestion.start_page_number,
+          end_page_number: suggestion.end_page_number,
+          chapter_type: suggestion.chapter_type,
+          description: suggestion.description,
+        });
+      }
+      await loadChapters();
+      onChaptersUpdated?.();
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } catch (error) {
+      console.error('Error accepting all suggestions:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to create chapters');
+      } else {
+        Alert.alert('Error', 'Failed to create chapters');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleAcceptReorganization = async () => {
+    try {
+      setIsLoading(true);
+      await apiService.executeReorganization(projectId, suggestions);
+      // Refresh pages and chapters after reorganization
+      onChaptersUpdated?.();
+      setShowSuggestions(false);
+      setSuggestions([]);
+      // Close modal and let parent refresh
+      onDismiss();
+    } catch (error) {
+      console.error('Error executing reorganization:', error);
+      if (Platform.OS === 'web') {
+        window.alert('Failed to reorganize pages');
+      } else {
+        Alert.alert('Error', 'Failed to reorganize pages');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const renderChapterItem = (chapter: Chapter) => (
@@ -208,6 +342,101 @@ export default function ChapterManagementModal({
       </View>
     </View>
   );
+
+  const renderSuggestion = (suggestion: any, index: number) => (
+    <View
+      key={index}
+      style={[styles.suggestionItem, { backgroundColor: theme.background, borderColor: theme.primary }]}
+    >
+      <View style={styles.suggestionInfo}>
+        <Text style={[styles.chapterTitle, { color: theme.text }]}>{suggestion.title}</Text>
+        <Text style={[styles.chapterPages, { color: theme.textSecondary }]}>
+          Pages {suggestion.start_page_number}
+          {suggestion.end_page_number ? ` - ${suggestion.end_page_number}` : '+'}
+          {' • '}
+          {suggestion.chapter_type}
+        </Text>
+        {suggestion.description && (
+          <Text style={[styles.chapterDescription, { color: theme.textTertiary }]}>
+            {suggestion.description}
+          </Text>
+        )}
+      </View>
+      <Pressable
+        style={[styles.acceptButton, { backgroundColor: theme.primary }]}
+        onPress={() => handleAcceptSuggestion(suggestion)}
+      >
+        <Icon name="check" size={18} color="#fff" />
+        <Text style={styles.acceptButtonText}>Accept</Text>
+      </Pressable>
+    </View>
+  );
+
+  const renderReorganization = () => {
+    const reorg = suggestions as any; // has type: 'reorganization' and categories
+
+    return (
+      <View>
+        <Text style={[styles.reorganizationTitle, { color: theme.text }]}>
+          Proposed Reorganization
+        </Text>
+        <Text style={[styles.reorganizationSubtitle, { color: theme.textSecondary }]}>
+          Pages will be reordered and organized into the following sections:
+        </Text>
+
+        {reorg.categories.map((category: any, catIndex: number) => (
+          <View
+            key={catIndex}
+            style={[styles.categoryContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}
+          >
+            <Text style={[styles.categoryTitle, { color: theme.primary }]}>
+              {category.category} ({category.pages.length} {category.pages.length === 1 ? 'page' : 'pages'})
+            </Text>
+            {category.pages.map((page: any, pageIndex: number) => (
+              <View
+                key={pageIndex}
+                style={[styles.pageRow, { borderColor: theme.border }]}
+              >
+                <Text style={[styles.pageTitle, { color: theme.text }]} numberOfLines={1}>
+                  {page.title}
+                </Text>
+                <Text style={[styles.pageNumber, { color: theme.textTertiary }]}>
+                  Page {page.current_page_number}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ))}
+
+        <Pressable
+          style={[styles.reorganizeButton, { backgroundColor: theme.primary }]}
+          onPress={handleAcceptReorganization}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <>
+              <Icon name="auto-awesome" size={20} color="#fff" />
+              <Text style={styles.reorganizeButtonText}>Accept Reorganization</Text>
+            </>
+          )}
+        </Pressable>
+
+        <Pressable
+          style={[styles.dismissButton, { backgroundColor: theme.secondary }]}
+          onPress={() => {
+            setShowSuggestions(false);
+            setSuggestions([]);
+          }}
+        >
+          <Text style={[styles.dismissButtonText, { color: theme.text }]}>
+            Dismiss
+          </Text>
+        </Pressable>
+      </View>
+    );
+  };
 
   const renderEditor = () => (
     <View style={[styles.editorContainer, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -319,29 +548,89 @@ export default function ChapterManagementModal({
             {(isCreating || editingChapter) && renderEditor()}
 
             {!isCreating && !editingChapter && (
-              <Pressable
-                style={[styles.addButton, { backgroundColor: theme.primary }]}
-                onPress={handleStartCreate}
-              >
-                <Icon name="add" size={20} color={theme.primaryText} />
-                <Text style={[styles.addButtonText, { color: theme.primaryText }]}>Add Section</Text>
-              </Pressable>
+              <>
+                {/* AI Suggestions Button */}
+                {chapters.length === 0 && !showSuggestions && (
+                  <Pressable
+                    style={[styles.suggestButton, { backgroundColor: theme.secondary, borderColor: theme.primary }]}
+                    onPress={handleGetSuggestions}
+                    disabled={isLoadingSuggestions}
+                  >
+                    {isLoadingSuggestions ? (
+                      <ActivityIndicator size="small" color={theme.primary} />
+                    ) : (
+                      <>
+                        <Icon name="auto-awesome" size={20} color={theme.primary} />
+                        <Text style={[styles.suggestButtonText, { color: theme.primary }]}>
+                          Suggest Sections with AI
+                        </Text>
+                      </>
+                    )}
+                  </Pressable>
+                )}
+
+                {/* Suggestions List or Reorganization Preview */}
+                {showSuggestions && ((suggestions as any).type === 'reorganization' ? (suggestions as any).categories?.length > 0 : suggestions.length > 0) && (
+                  <View style={styles.suggestionsContainer}>
+                    {(suggestions as any).type === 'reorganization' ? (
+                      renderReorganization()
+                    ) : (
+                      <>
+                        <View style={styles.suggestionsHeader}>
+                          <Text style={[styles.suggestionsTitle, { color: theme.text }]}>
+                            Suggested Sections
+                          </Text>
+                          <Pressable
+                            style={[styles.acceptAllButton, { backgroundColor: theme.primary }]}
+                            onPress={handleAcceptAllSuggestions}
+                          >
+                            <Text style={styles.acceptAllButtonText}>Accept All</Text>
+                          </Pressable>
+                        </View>
+                        {suggestions.map(renderSuggestion)}
+                        <Pressable
+                          style={[styles.dismissButton, { backgroundColor: theme.secondary }]}
+                          onPress={() => {
+                            setShowSuggestions(false);
+                            setSuggestions([]);
+                          }}
+                        >
+                          <Text style={[styles.dismissButtonText, { color: theme.text }]}>
+                            Dismiss Suggestions
+                          </Text>
+                        </Pressable>
+                      </>
+                    )}
+                  </View>
+                )}
+
+                {/* Manual Add Button */}
+                <Pressable
+                  style={[styles.addButton, { backgroundColor: showSuggestions ? theme.secondary : theme.primary }]}
+                  onPress={handleStartCreate}
+                >
+                  <Icon name="add" size={20} color={showSuggestions ? theme.text : theme.primaryText} />
+                  <Text style={[styles.addButtonText, { color: showSuggestions ? theme.text : theme.primaryText }]}>
+                    Add Section Manually
+                  </Text>
+                </Pressable>
+              </>
             )}
 
             {isLoading && chapters.length === 0 ? (
               <ActivityIndicator size="large" color={theme.primary} style={styles.loader} />
-            ) : chapters.length === 0 ? (
+            ) : chapters.length === 0 && !showSuggestions ? (
               <View style={styles.emptyState}>
                 <Icon name="bookmark-border" size={48} color={theme.textTertiary} />
                 <Text style={[styles.emptyText, { color: theme.textSecondary }]}>
-                  No sections yet. Add one to organize your pages!
+                  No sections yet. Get AI suggestions or add one manually!
                 </Text>
               </View>
-            ) : (
+            ) : chapters.length > 0 ? (
               <View style={styles.chapterList}>
                 {chapters.map(renderChapterItem)}
               </View>
-            )}
+            ) : null}
           </ScrollView>
         </View>
       </View>
@@ -518,5 +807,134 @@ const styles = StyleSheet.create({
     fontSize: 15,
     textAlign: 'center',
     maxWidth: 250,
+  },
+  suggestButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    marginBottom: 16,
+    borderWidth: 2,
+  },
+  suggestButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  suggestionsContainer: {
+    marginBottom: 20,
+  },
+  suggestionsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  suggestionsTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  acceptAllButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+  },
+  acceptAllButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    marginBottom: 10,
+    gap: 12,
+  },
+  suggestionInfo: {
+    flex: 1,
+    gap: 4,
+  },
+  acceptButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  acceptButtonText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  dismissButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  dismissButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  reorganizationTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  reorganizationSubtitle: {
+    fontSize: 14,
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  categoryContainer: {
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: 12,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  pageRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 6,
+    paddingHorizontal: 8,
+    borderTopWidth: 1,
+    marginTop: 4,
+  },
+  pageTitle: {
+    fontSize: 14,
+    flex: 1,
+    marginRight: 8,
+  },
+  pageNumber: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  reorganizeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 10,
+    marginTop: 16,
+  },
+  reorganizeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

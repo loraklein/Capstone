@@ -235,6 +235,17 @@ export class ApiService {
     });
   }
 
+  async getSuggestedChapters(projectId: string): Promise<any> {
+    return this.makeRequest(`/chapters/project/${projectId}/suggestions`);
+  }
+
+  async executeReorganization(projectId: string, reorganization: any): Promise<any> {
+    return this.makeRequest(`/chapters/project/${projectId}/reorganize`, {
+      method: 'POST',
+      body: JSON.stringify(reorganization),
+    });
+  }
+
   // Text enhancement
   async correctPageText(pageId: string, provider?: string): Promise<any> {
     return this.makeRequest(`/text-enhancement/pages/${pageId}/correct`, {

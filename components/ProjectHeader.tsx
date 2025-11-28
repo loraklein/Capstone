@@ -12,7 +12,6 @@ interface ProjectHeaderProps {
   showAddButton?: boolean;
   onAddPage?: () => void;
   onBack?: () => void;
-  onManageChapters?: () => void;
 }
 
 export default function ProjectHeader({
@@ -22,7 +21,6 @@ export default function ProjectHeader({
   showAddButton,
   onAddPage,
   onBack,
-  onManageChapters
 }: ProjectHeaderProps) {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -64,21 +62,6 @@ export default function ProjectHeader({
         </View>
 
         <View style={styles.buttonGroup}>
-          {onManageChapters && (
-            <Pressable
-              style={({ pressed }) => [
-                styles.iconButton,
-                {
-                  backgroundColor: theme.secondary,
-                  transform: [{ scale: pressed ? 0.95 : 1 }],
-                }
-              ]}
-              onPress={onManageChapters}
-            >
-              <Icon name="bookmark" size={24} color={theme.text} />
-            </Pressable>
-          )}
-
           {showAddButton && onAddPage && (
             <Pressable
               style={({ pressed }) => [

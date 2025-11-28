@@ -7,7 +7,7 @@ import CameraCapture from './CameraCapture';
 
 interface PhotoSourceSelectorProps {
   visible: boolean;
-  onCapture: (uri: string) => void;
+  onCapture: (uri: string | string[]) => void;
   onClose: () => void;
 }
 
@@ -33,16 +33,19 @@ export default function PhotoSourceSelector({ visible, onCapture, onClose }: Pho
         return;
       }
 
-      // Launch image picker
+      // Launch image picker with multiple selection enabled
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ['images'],
         allowsEditing: false,
         quality: 0.8,
-        allowsMultipleSelection: false,
+        allowsMultipleSelection: true,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        onCapture(result.assets[0].uri);
+        // If multiple images selected, pass array of URIs
+        // If single image, pass array for consistency (will be handled by useCameraManagement)
+        const uris = result.assets.map(asset => asset.uri);
+        onCapture(uris.length === 1 ? uris[0] : uris);
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -88,7 +91,7 @@ export default function PhotoSourceSelector({ visible, onCapture, onClose }: Pho
           </View>
 
           <Text style={[styles.subtitle, { color: theme.textSecondary }]}>
-            Choose how you'd like to add a photo to your project
+            Choose how you'd like to add photos to your project
           </Text>
 
           <View style={styles.buttonsContainer}>
@@ -115,10 +118,10 @@ export default function PhotoSourceSelector({ visible, onCapture, onClose }: Pho
                 <Icon name="photo-library" size={32} color={theme.primary} />
               </View>
               <Text style={[styles.optionTitle, { color: theme.text }]}>
-                Upload Photo
+                Upload Photos
               </Text>
               <Text style={[styles.optionDescription, { color: theme.textSecondary }]}>
-                Choose an existing photo from your library
+                Choose one or more photos from your library
               </Text>
             </Pressable>
           </View>

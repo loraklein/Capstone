@@ -70,12 +70,17 @@ export function useProjectPages(projectId: string) {
         throw new Error('User must be signed in to add pages');
       }
       const newPage = await pageService.addPage(projectId, { photoUri }, user.id);
-      
-      const updatedPages = [...capturedPages, newPage];
-      setCapturedPages(updatedPages);
-      
+
+      // Use functional setState to avoid stale state issues during rapid uploads
+      let newLength = 0;
+      setCapturedPages(prevPages => {
+        const updatedPages = [...prevPages, newPage];
+        newLength = updatedPages.length;
+        return updatedPages;
+      });
+
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      return updatedPages.length;
+      return newLength;
     } catch (error) {
       console.log('Error adding page:', error);
       throw error;
