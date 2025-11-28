@@ -23,6 +23,7 @@ import PageCard from '../../components/PageCard';
 import ReviewProgressBar from '../../components/ReviewProgressBar';
 import PhotoSourceSelector from '../../components/PhotoSourceSelector';
 import PhotoViewer from '../../components/PhotoViewer';
+import PrintGuidanceModal from '../../components/PrintGuidanceModal';
 import ProjectHeader from '../../components/ProjectHeader';
 import UploadProgressModal from '../../components/UploadProgressModal';
 import WebFeaturesBanner from '../../components/WebFeaturesBanner';
@@ -61,7 +62,12 @@ export default function ProjectDetailScreen() {
   const { showPhotoViewer, selectedPage, handleViewPage, handleClosePhotoViewer } = usePhotoViewer();
   const { showDeleteModal, handleDeletePage, confirmDelete, cancelDelete } = useDeleteConfirmation({ deletePage, refreshProjects });
   const { isReorderMode, handleToggleReorderMode } = useReorderMode();
-  const { hasPagesWithPhotos, handleExportPdf } = usePdfExport({ projectName, description, capturedPages, generatePdf });
+  const handleExportSuccess = (type: 'pdf' | 'book' | 'custom') => {
+    setExportType(type);
+    setShowPrintGuidance(true);
+  };
+
+  const { hasPagesWithPhotos, handleExportPdf } = usePdfExport({ projectName, description, capturedPages, generatePdf, onExportSuccess: handleExportSuccess });
   const [isBatchProcessing, setIsBatchProcessing] = useState(false);
   const [showTextEditor, setShowTextEditor] = useState(false);
   const [editingPage, setEditingPage] = useState<CapturedPage | null>(null);
@@ -70,6 +76,8 @@ export default function ProjectDetailScreen() {
   const [showCustomPdfModal, setShowCustomPdfModal] = useState(false);
   const [showPrintBookModal, setShowPrintBookModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [showPrintGuidance, setShowPrintGuidance] = useState(false);
+  const [exportType, setExportType] = useState<'pdf' | 'book' | 'custom'>('pdf');
   const [reviewStats, setReviewStats] = useState({ total: 0, reviewed: 0, needsAttention: 0, unreviewed: 0, percentComplete: 0 });
   const [reviewFilter, setReviewFilter] = useState<'all' | 'unreviewed' | 'needs_attention' | 'reviewed'>('all');
 
@@ -225,7 +233,7 @@ export default function ProjectDetailScreen() {
       console.log('Exporting custom PDF with settings:', settings);
       await generatePdf(projectName, description, capturedPages, {
         customPdfSettings: settings,
-      });
+      }, handleExportSuccess);
     } catch (error) {
       console.error('Error exporting custom PDF:', error);
     }
@@ -242,7 +250,7 @@ export default function ProjectDetailScreen() {
       console.log('Exporting print book with settings:', settings);
       await generatePdf(projectName, description, capturedPages, {
         bookSettings: settings,
-      });
+      }, handleExportSuccess);
     } catch (error) {
       console.error('Error exporting print book:', error);
     }
@@ -605,6 +613,13 @@ export default function ProjectDetailScreen() {
         projectId={projectId}
         totalPages={capturedPages.length}
         onDismiss={() => setShowChapterModal(false)}
+      />
+
+      {/* Print Guidance Modal */}
+      <PrintGuidanceModal
+        visible={showPrintGuidance}
+        exportType={exportType}
+        onClose={() => setShowPrintGuidance(false)}
       />
     </View>
   );

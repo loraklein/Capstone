@@ -26,7 +26,7 @@ export default function WelcomeEmptyState({ onPress }: WelcomeEmptyStateProps) {
       accessibilityHint="Tap to create your first document scanning project"
     >
       <Icon name="document-scanner" size={80} color={theme.primary} />
-      <Text style={[styles.emptyTitle, { color: theme.text }]}>Welcome to DocuScan</Text>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>Welcome to PastForward</Text>
       <Text style={[styles.emptySubtitle, { color: theme.textSecondary }]}>
         Tap here to create your first project
       </Text>

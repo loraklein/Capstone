@@ -17,7 +17,7 @@ interface PdfGenerationOptions {
 
 interface UsePdfGenerationReturn {
   isGenerating: boolean;
-  generatePdf: (projectName: string, description: string, pages: CapturedPage[], options?: PdfGenerationOptions) => Promise<void>;
+  generatePdf: (projectName: string, description: string, pages: CapturedPage[], options?: PdfGenerationOptions, onSuccess?: (exportType: 'pdf' | 'book' | 'custom') => void) => Promise<void>;
 }
 
 const sanitizeFileName = (value: string) =>
@@ -32,7 +32,7 @@ export default function usePdfGeneration(projectId: string): UsePdfGenerationRet
   const [isGenerating, setIsGenerating] = useState(false);
   const { getAccessToken } = useAuth();
 
-  const generatePdf = async (projectName: string, _description: string, pages: CapturedPage[], options?: PdfGenerationOptions) => {
+  const generatePdf = async (projectName: string, _description: string, pages: CapturedPage[], options?: PdfGenerationOptions, onSuccess?: (exportType: 'pdf' | 'book' | 'custom') => void) => {
     if (pages.length === 0) {
       throw new Error('No pages available to export.');
     }
@@ -159,6 +159,12 @@ export default function usePdfGeneration(projectId: string): UsePdfGenerationRet
         } catch (error) {
           console.log('Haptics success failed', error);
         }
+      }
+
+      // Determine export type and call onSuccess callback
+      if (onSuccess) {
+        const exportType = options?.bookSettings ? 'book' : options?.customPdfSettings ? 'custom' : 'pdf';
+        onSuccess(exportType);
       }
     } catch (error) {
       console.error('PDF export failed', error);
