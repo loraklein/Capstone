@@ -21,6 +21,8 @@ export interface CapturedPage {
   ai_provider?: string;
   processing_status?: string;
   created_at?: string;
+  review_status?: 'unreviewed' | 'needs_attention' | 'reviewed';
+  reviewed_at?: string;
 }
 
 export interface AddPageData {
@@ -53,6 +55,8 @@ class PageService {
         ai_provider: page.ai_provider,
         processing_status: page.processing_status,
         created_at: page.created_at,
+        review_status: page.review_status,
+        reviewed_at: page.reviewed_at,
       }));
 
       return pages;

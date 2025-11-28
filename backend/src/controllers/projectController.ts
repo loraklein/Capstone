@@ -271,8 +271,13 @@ export const exportProjectBookHtml = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'User not authenticated' });
     }
 
+    // Parse book settings from query params
+    const bookSettings = req.query.bookSettings
+      ? JSON.parse(req.query.bookSettings as string)
+      : undefined;
+
     const payload = await buildBookExport(id, userId);
-    const html = renderBookHtml(payload, { includeImages });
+    const html = renderBookHtml(payload, { includeImages, bookSettings });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);

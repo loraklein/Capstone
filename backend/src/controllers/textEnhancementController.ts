@@ -13,10 +13,10 @@ export const correctPageText = async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    // Get the page and verify ownership
+    // Get the page and verify ownership, also fetch project_type
     const { data: page, error: pageError } = await supabase
       .from('pages')
-      .select('*, projects!inner(user_id)')
+      .select('*, projects!inner(user_id, project_type)')
       .eq('id', pageId)
       .single();
 
@@ -31,8 +31,15 @@ export const correctPageText = async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'No text available to correct' });
     }
 
-    // Correct the text using AI
-    const correction = await textEnhancementService.correctPageText(textToCorrect, provider);
+    // Get the project type from the page's project
+    const projectType = (page.projects as any).project_type || 'other';
+
+    // Correct the text using AI with project type context
+    const correction = await textEnhancementService.correctPageText(
+      textToCorrect,
+      provider,
+      projectType
+    );
 
     // Return the correction without saving (let user review first)
     res.json({
@@ -41,6 +48,7 @@ export const correctPageText = async (req: Request, res: Response) => {
       corrected: correction.corrected,
       changes: correction.changes,
       provider: provider || 'ollama',
+      projectType,
     });
   } catch (error) {
     console.error('Error in correctPageText:', error);

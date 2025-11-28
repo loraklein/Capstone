@@ -11,9 +11,11 @@ import {
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import Icon from './Icon';
+import BookPreviewModal from './BookPreviewModal';
 
 interface BookExportSettingsModalProps {
   visible: boolean;
+  projectId: string;
   projectName: string;
   projectDescription?: string;
   onExport: (settings: BookSettings) => void;
@@ -21,6 +23,7 @@ interface BookExportSettingsModalProps {
 }
 
 export interface BookSettings {
+  projectId: string;
   bookSize: '6x9' | '8x11' | '5.5x8.5';
   title: string;
   subtitle: string;
@@ -31,6 +34,7 @@ export interface BookSettings {
   coverTemplate: 'simple' | 'elegant' | 'modern';
   addPageBreaks: boolean;
   includeTableOfContents: boolean;
+  includeImages: boolean;
 }
 
 const BOOK_SIZES = [
@@ -41,13 +45,16 @@ const BOOK_SIZES = [
 
 export default function BookExportSettingsModal({
   visible,
+  projectId,
   projectName,
   projectDescription = '',
   onExport,
   onDismiss,
 }: BookExportSettingsModalProps) {
   const { theme } = useTheme();
+  const [showPreview, setShowPreview] = useState(false);
   const [settings, setSettings] = useState<BookSettings>({
+    projectId,
     bookSize: '6x9',
     title: projectName,
     subtitle: projectDescription,
@@ -58,6 +65,7 @@ export default function BookExportSettingsModal({
     coverTemplate: 'simple',
     addPageBreaks: true,
     includeTableOfContents: true,
+    includeImages: true,
   });
 
   const updateSetting = <K extends keyof BookSettings>(
@@ -72,6 +80,7 @@ export default function BookExportSettingsModal({
   };
 
   return (
+    <>
     <Modal
       visible={visible}
       animationType="slide"
@@ -353,6 +362,37 @@ export default function BookExportSettingsModal({
                   />
                 </View>
               </Pressable>
+
+              {/* Include Images */}
+              <Pressable
+                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border, marginTop: 12 }]}
+                onPress={() => updateSetting('includeImages', !settings.includeImages)}
+              >
+                <View style={styles.toggleLeft}>
+                  <Text style={[styles.toggleLabel, { color: theme.text }]}>Include images</Text>
+                  <Text style={[styles.toggleDescription, { color: theme.textSecondary }]}>
+                    Include scanned page images alongside text
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.toggle,
+                    {
+                      backgroundColor: settings.includeImages ? theme.primary : theme.border,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.toggleThumb,
+                      {
+                        backgroundColor: theme.surface,
+                        transform: [{ translateX: settings.includeImages ? 20 : 0 }],
+                      },
+                    ]}
+                  />
+                </View>
+              </Pressable>
             </View>
 
             {/* Info Box */}
@@ -364,21 +404,47 @@ export default function BookExportSettingsModal({
             </View>
           </ScrollView>
 
-          {/* Export Button */}
+          {/* Action Buttons */}
           <View style={[styles.footer, { borderTopColor: theme.divider }]}>
-            <Pressable
-              style={[styles.exportButton, { backgroundColor: theme.primary }]}
-              onPress={handleExport}
-            >
-              <Icon name="menu-book" size={20} color={theme.primaryText} />
-              <Text style={[styles.exportButtonText, { color: theme.primaryText }]}>
-                Create Printable Book
-              </Text>
-            </Pressable>
+            <View style={styles.buttonRow}>
+              <Pressable
+                style={[styles.previewButton, { backgroundColor: 'transparent', borderColor: theme.primary }]}
+                onPress={() => setShowPreview(true)}
+              >
+                <Icon name="visibility" size={20} color={theme.primary} />
+                <Text style={[styles.previewButtonText, { color: theme.primary }]}>
+                  Preview Book
+                </Text>
+              </Pressable>
+
+              <Pressable
+                style={[styles.exportButton, { backgroundColor: theme.primary }]}
+                onPress={handleExport}
+              >
+                <Icon name="menu-book" size={20} color={theme.primaryText} />
+                <Text style={[styles.exportButtonText, { color: theme.primaryText }]}>
+                  Create Book
+                </Text>
+              </Pressable>
+            </View>
           </View>
         </View>
       </View>
     </Modal>
+
+    {/* Book Preview Modal */}
+    <BookPreviewModal
+      visible={showPreview}
+      projectName={projectName}
+      projectDescription={projectDescription}
+      bookSettings={settings}
+      onDismiss={() => setShowPreview(false)}
+      onExport={() => {
+        setShowPreview(false);
+        handleExport();
+      }}
+    />
+    </>
   );
 }
 
@@ -538,7 +604,27 @@ const styles = StyleSheet.create({
     paddingTop: 20,
     borderTopWidth: 1,
   },
+  buttonRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  previewButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 2,
+  },
+  previewButtonText: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
   exportButton: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

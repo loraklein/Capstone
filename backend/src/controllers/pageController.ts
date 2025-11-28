@@ -26,7 +26,23 @@ export const getProjectPages = async (req: Request, res: Response) => {
     // Get all pages for this project
     const { data, error } = await supabase
       .from('pages')
-      .select('*')
+      .select(`
+        id,
+        project_id,
+        page_number,
+        photo_url,
+        rotation,
+        extracted_text,
+        edited_text,
+        ai_confidence,
+        ai_processed_at,
+        ai_provider,
+        ai_annotations,
+        processing_status,
+        created_at,
+        review_status,
+        reviewed_at
+      `)
       .eq('project_id', projectId)
       .order('page_number', { ascending: true });
 
@@ -306,10 +322,14 @@ export const updatePageText = async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Page not found' });
     }
 
-    // Update the edited text
+    // Update the edited text and automatically mark as reviewed
     const { data, error } = await supabase
       .from('pages')
-      .update({ edited_text: editedText })
+      .update({
+        edited_text: editedText,
+        review_status: 'reviewed',
+        reviewed_at: new Date().toISOString()
+      })
       .eq('id', id)
       .select()
       .single();
@@ -370,6 +390,120 @@ export const reorderPages = async (req: Request, res: Response) => {
     res.json({ message: 'Pages reordered successfully' });
   } catch (error) {
     console.error('Error in reorderPages:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Update page review status
+export const updatePageReviewStatus = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { reviewStatus } = req.body; // 'unreviewed', 'needs_attention', 'reviewed'
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    if (!reviewStatus || !['unreviewed', 'needs_attention', 'reviewed'].includes(reviewStatus)) {
+      return res.status(400).json({ error: 'Invalid review status' });
+    }
+
+    // Verify the page belongs to a project owned by the user
+    const { data: page, error: pageError } = await supabase
+      .from('pages')
+      .select('id, project_id, projects!inner(user_id)')
+      .eq('id', id)
+      .single();
+
+    if (pageError || !page || (page.projects as any).user_id !== userId) {
+      return res.status(404).json({ error: 'Page not found' });
+    }
+
+    // Update review status
+    const updateData: any = {
+      review_status: reviewStatus,
+    };
+
+    // If marking as reviewed, set reviewed_at timestamp
+    if (reviewStatus === 'reviewed') {
+      updateData.reviewed_at = new Date().toISOString();
+    }
+
+    const { data, error } = await supabase
+      .from('pages')
+      .update(updateData)
+      .eq('id', id)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Error updating page review status:', error);
+      return res.status(500).json({ error: 'Failed to update review status' });
+    }
+
+    res.json(data);
+  } catch (error) {
+    console.error('Error in updatePageReviewStatus:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
+// Get review statistics for a project
+export const getProjectReviewStats = async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'User not authenticated' });
+    }
+
+    // Verify the project belongs to the user
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .single();
+
+    if (projectError || !project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Get all pages with their review status
+    const { data: pages, error } = await supabase
+      .from('pages')
+      .select('review_status, ai_confidence')
+      .eq('project_id', projectId);
+
+    if (error) {
+      console.error('Error fetching pages for stats:', error);
+      return res.status(500).json({ error: 'Failed to fetch review stats' });
+    }
+
+    // Calculate statistics
+    const total = pages?.length || 0;
+    const reviewed = pages?.filter(p => p.review_status === 'reviewed').length || 0;
+    const needsAttention = pages?.filter(p => p.review_status === 'needs_attention').length || 0;
+    const unreviewed = pages?.filter(p => p.review_status === 'unreviewed').length || 0;
+
+    // Calculate average confidence
+    const pagesWithConfidence = pages?.filter(p => p.ai_confidence !== null) || [];
+    const avgConfidence = pagesWithConfidence.length > 0
+      ? pagesWithConfidence.reduce((sum, p) => sum + (p.ai_confidence || 0), 0) / pagesWithConfidence.length
+      : null;
+
+    res.json({
+      total,
+      reviewed,
+      needsAttention,
+      unreviewed,
+      percentComplete: total > 0 ? Math.round((reviewed / total) * 100) : 0,
+      avgConfidence: avgConfidence ? Math.round(avgConfidence * 100) / 100 : null,
+    });
+  } catch (error) {
+    console.error('Error in getProjectReviewStats:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 };

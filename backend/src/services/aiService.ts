@@ -351,6 +351,13 @@ export class AIService {
       // Extract text using AI
       const result = await this.extractTextFromImage(imageUrl, provider);
 
+      // Determine review status based on confidence and text quality
+      let reviewStatus = 'unreviewed';
+      if (result.confidence < 0.70 || !result.text || result.text.trim() === '' ||
+          result.text.toLowerCase().includes('no text detected')) {
+        reviewStatus = 'needs_attention';
+      }
+
       // Update page with extracted text and annotations
       await supabase
         .from('pages')
@@ -359,22 +366,24 @@ export class AIService {
           ai_confidence: result.confidence,
           ai_processed_at: new Date().toISOString(),
           processing_status: 'completed',
-          ai_annotations: result.annotations || null
+          ai_annotations: result.annotations || null,
+          review_status: reviewStatus
         })
         .eq('id', pageId);
 
       console.log(`Successfully processed page ${pageId} with ${result.provider}`);
     } catch (error) {
       console.error(`Error processing page ${pageId}:`, error);
-      
-      // Update page status to failed
+
+      // Update page status to failed and mark as needs attention
       await supabase
         .from('pages')
-        .update({ 
-          processing_status: 'failed'
+        .update({
+          processing_status: 'failed',
+          review_status: 'needs_attention'
         })
         .eq('id', pageId);
-      
+
       throw error;
     }
   }

@@ -3,7 +3,7 @@ import Icon from '../../components/Icon';
 import * as Haptics from 'expo-haptics';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, View, Platform, Dimensions } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, Platform, Dimensions, Alert } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import DraggableFlatList from 'react-native-draggable-flatlist';
 
@@ -20,6 +20,7 @@ import BookExportSettingsModal, { BookSettings } from '../../components/BookExpo
 import ChapterManagementModal from '../../components/ChapterManagementModal';
 import LineByLineTextEditor from '../../components/LineByLineTextEditor';
 import PageCard from '../../components/PageCard';
+import ReviewProgressBar from '../../components/ReviewProgressBar';
 import PhotoSourceSelector from '../../components/PhotoSourceSelector';
 import PhotoViewer from '../../components/PhotoViewer';
 import ProjectHeader from '../../components/ProjectHeader';
@@ -68,6 +69,8 @@ export default function ProjectDetailScreen() {
   const [showCustomPdfModal, setShowCustomPdfModal] = useState(false);
   const [showPrintBookModal, setShowPrintBookModal] = useState(false);
   const [showChapterModal, setShowChapterModal] = useState(false);
+  const [reviewStats, setReviewStats] = useState({ total: 0, reviewed: 0, needsAttention: 0, unreviewed: 0, percentComplete: 0 });
+  const [reviewFilter, setReviewFilter] = useState<'all' | 'unreviewed' | 'needs_attention' | 'reviewed'>('all');
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
@@ -121,6 +124,47 @@ export default function ProjectDetailScreen() {
   };
 
   const hasPagesWithText = capturedPages.some(page => page.edited_text || page.extracted_text);
+
+  // Load review statistics
+  useEffect(() => {
+    const loadReviewStats = async () => {
+      try {
+        const { apiService } = await import('../../utils/apiService');
+        const stats = await apiService.getProjectReviewStats(projectId);
+        setReviewStats(stats);
+      } catch (error) {
+        console.log('Error loading review stats:', error);
+      }
+    };
+
+    if (capturedPages.length > 0) {
+      loadReviewStats();
+    }
+  }, [capturedPages, projectId]);
+
+  // Filter pages based on review status
+  const filteredPages = React.useMemo(() => {
+    if (reviewFilter === 'all') return capturedPages;
+    return capturedPages.filter(page => page.review_status === reviewFilter);
+  }, [capturedPages, reviewFilter]);
+
+  // Navigate to next unreviewed page
+  const handleNextUnreviewed = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+
+    const nextPage = capturedPages.find(p =>
+      p.review_status === 'unreviewed' || p.review_status === 'needs_attention'
+    );
+
+    if (nextPage) {
+      handleEditText(nextPage);
+    } else {
+      // All pages reviewed!
+      Alert.alert('All Done!', 'All pages have been reviewed. Great work!');
+    }
+  };
 
   // Check if we should show the web features banner
   useEffect(() => {
@@ -251,6 +295,19 @@ export default function ProjectDetailScreen() {
         onManageChapters={capturedPages.length > 0 ? () => setShowChapterModal(true) : undefined}
       />
 
+      {/* Review Progress Bar */}
+      {capturedPages.length > 0 && reviewStats.total > 0 && (
+        <ReviewProgressBar
+          total={reviewStats.total}
+          reviewed={reviewStats.reviewed}
+          needsAttention={reviewStats.needsAttention}
+          unreviewed={reviewStats.unreviewed}
+          percentComplete={reviewStats.percentComplete}
+          onFilterChange={setReviewFilter}
+          currentFilter={reviewFilter}
+        />
+      )}
+
       {capturedPages.length > 1 && (
         <View style={[styles.reorderSection, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
           {/* Row 1: Editing Actions */}
@@ -300,9 +357,32 @@ export default function ProjectDetailScreen() {
             </Pressable>
           </View>
 
-          {/* Row 2: View/Export Actions */}
-          {(hasPagesWithText || hasPagesWithPhotos) && (
+          {/* Row 2: View/Export/Navigation Actions */}
+          {(hasPagesWithText || hasPagesWithPhotos || reviewStats.unreviewed > 0 || reviewStats.needsAttention > 0) && (
             <View style={[styles.buttonRow, { marginTop: 8 }]}>
+              {/* Next Unreviewed Button */}
+              {(reviewStats.unreviewed > 0 || reviewStats.needsAttention > 0) && (
+                <Pressable
+                  style={[
+                    styles.reorderButton,
+                    { backgroundColor: theme.primary }
+                  ]}
+                  onPress={handleNextUnreviewed}
+                >
+                  <Icon
+                    name="arrow-forward"
+                    size={16}
+                    color="white"
+                  />
+                  <Text style={[
+                    styles.reorderButtonText,
+                    { color: "white" }
+                  ]}>
+                    Next Unreviewed
+                  </Text>
+                </Pressable>
+              )}
+
               {hasPagesWithText && (
                 <Pressable
                   style={[
@@ -392,7 +472,7 @@ export default function ProjectDetailScreen() {
       ) : (
         <FlatList
           ref={flatListRef}
-          data={capturedPages}
+          data={filteredPages}
           renderItem={({ item, index }) => (
             <PageCard
               page={item}
@@ -478,6 +558,7 @@ export default function ProjectDetailScreen() {
       {/* Book Export Settings Modal */}
       <BookExportSettingsModal
         visible={showPrintBookModal}
+        projectId={projectId}
         projectName={projectName}
         projectDescription={description}
         onExport={handleExportPrintBook}

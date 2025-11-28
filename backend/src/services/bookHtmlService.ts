@@ -114,12 +114,93 @@ const renderTitlePage = (frontMatter: BookFrontMatter, bookSettings?: BookSettin
   `;
 };
 
+const parseNaturalFormatting = (text: string): string => {
+  if (!text) return '';
+
+  const lines = text.split(/\r?\n/);
+  const result: string[] = [];
+  let i = 0;
+  let inBulletList = false;
+  let inNumberedList = false;
+
+  // Date pattern: matches dates like "January 15, 2024", "1/15/24", "Dec 5, 1985", "Monday, Jan 15"
+  const datePattern = /^(?:(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),?\s*)?(?:\d{1,2}\/\d{1,2}\/\d{2,4}|(?:January|February|March|April|May|June|July|August|September|October|November|December|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\.?\s+\d{1,2},?\s+\d{2,4})$/i;
+
+  while (i < lines.length) {
+    const line = lines[i].trim();
+
+    // Close any open lists if this line doesn't continue them
+    if (inBulletList && !line.startsWith('- ')) {
+      result.push('</ul>');
+      inBulletList = false;
+    }
+    if (inNumberedList && !/^\d+\.\s/.test(line)) {
+      result.push('</ol>');
+      inNumberedList = false;
+    }
+
+    // Empty line - preserve as paragraph break
+    if (line === '') {
+      if (!inBulletList && !inNumberedList) {
+        // Don't add extra breaks, just move on
+      }
+      i++;
+      continue;
+    }
+
+    // Date detection (for journals and letters)
+    if (datePattern.test(line)) {
+      result.push(`<p class="date-header"><strong>${escapeHtml(line)}</strong></p>`);
+    }
+    // Section headers (lines ending with :)
+    else if (line.endsWith(':')) {
+      result.push(`<p class="section-header"><strong>${escapeHtml(line)}</strong></p>`);
+    }
+    // Bullet list items
+    else if (line.startsWith('- ')) {
+      if (!inBulletList) {
+        result.push('<ul class="ingredient-list">');
+        inBulletList = true;
+      }
+      result.push(`<li>${escapeHtml(line.substring(2))}</li>`);
+    }
+    // Numbered list items
+    else if (/^\d+\.\s/.test(line)) {
+      if (!inNumberedList) {
+        result.push('<ol class="direction-list">');
+        inNumberedList = true;
+      }
+      const text = line.replace(/^\d+\.\s/, '');
+      result.push(`<li>${escapeHtml(text)}</li>`);
+    }
+    // Check if this is a potential title (first non-empty line before a section header or blank line)
+    else if (i === 0 || (i > 0 && lines[i - 1].trim() === '')) {
+      // Check if next line is a section header, date, or blank
+      const nextLine = i + 1 < lines.length ? lines[i + 1].trim() : '';
+      if (nextLine === '' || nextLine.endsWith(':') || datePattern.test(nextLine)) {
+        result.push(`<h3 class="recipe-title">${escapeHtml(line)}</h3>`);
+      } else {
+        result.push(`<p>${escapeHtml(line)}</p>`);
+      }
+    }
+    // Regular paragraph
+    else {
+      result.push(`<p>${escapeHtml(line)}</p>`);
+    }
+
+    i++;
+  }
+
+  // Close any remaining open lists
+  if (inBulletList) result.push('</ul>');
+  if (inNumberedList) result.push('</ol>');
+
+  return result.join('\n');
+};
+
 const renderPage = (page: BookExportPage, options: RenderOptions): string => {
   const text = page.finalText
-    ? page.finalText
-        .split(/\r?\n\r?\n/)
-        .map((paragraph) => `<p>${escapeHtml(paragraph)}</p>`)
-        .join('\n')
+    ? parseNaturalFormatting(page.finalText)
     : '<p class="placeholder">No text available for this page.</p>';
 
   const showImages = options.includeImages ?? false;
@@ -401,6 +482,44 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
           .placeholder {
             font-style: italic;
             color: #7a6a5e;
+          }
+          /* Natural formatting styles for recipes and structured content */
+          .recipe-title {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 1.5rem 0;
+            text-align: center;
+            color: #1a1410;
+          }
+          .date-header {
+            font-size: 1.1rem;
+            margin: 2rem 0 1rem 0;
+            color: #3a3028;
+            font-style: italic;
+          }
+          .date-header strong {
+            font-weight: 600;
+          }
+          .section-header {
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem 0;
+            color: #2a2318;
+          }
+          .section-header strong {
+            font-weight: 700;
+          }
+          .ingredient-list, .direction-list {
+            margin: 0.5rem 0 1.5rem 0;
+            padding-left: 2rem;
+          }
+          .ingredient-list li {
+            margin-bottom: 0.4rem;
+            line-height: 1.5;
+          }
+          .direction-list li {
+            margin-bottom: 0.75rem;
+            line-height: 1.6;
+            padding-left: 0.5rem;
           }
           @media print {
             body {

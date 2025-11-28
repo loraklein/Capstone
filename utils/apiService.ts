@@ -149,6 +149,17 @@ export class ApiService {
     });
   }
 
+  async updatePageReviewStatus(pageId: string, reviewStatus: 'unreviewed' | 'needs_attention' | 'reviewed'): Promise<any> {
+    return this.makeRequest(`/pages/${pageId}/review-status`, {
+      method: 'PUT',
+      body: JSON.stringify({ reviewStatus }),
+    });
+  }
+
+  async getProjectReviewStats(projectId: string): Promise<any> {
+    return this.makeRequest(`/pages/project/${projectId}/review-stats`);
+  }
+
   async deletePage(pageId: string): Promise<any> {
     return this.makeRequest(`/pages/${pageId}`, {
       method: 'DELETE',
@@ -241,6 +252,32 @@ export class ApiService {
 
   async getTextEnhancementProviders(): Promise<{ providers: string[] }> {
     return this.makeRequest('/text-enhancement/providers');
+  }
+
+  async getBookPreviewHtml(projectId: string, bookSettings: any): Promise<string> {
+    const params = new URLSearchParams({
+      includeImages: bookSettings.includeImages?.toString() || 'false',
+      bookSettings: JSON.stringify(bookSettings),
+    });
+
+    const response = await fetch(
+      `${this.baseURL}/projects/${projectId}/export/book/html?${params.toString()}`,
+      {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(this.getAccessToken && this.getAccessToken()
+            ? { Authorization: `Bearer ${this.getAccessToken()}` }
+            : {}),
+        },
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch preview: ${response.statusText}`);
+    }
+
+    return response.text();
   }
 }
 

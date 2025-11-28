@@ -16,6 +16,8 @@ export interface CapturedPage {
   ai_confidence?: number;
   ai_provider?: string;
   processing_status?: string;
+  review_status?: 'unreviewed' | 'needs_attention' | 'reviewed';
+  reviewed_at?: string;
   created_at?: string;
 }
 

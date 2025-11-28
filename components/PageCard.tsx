@@ -62,30 +62,28 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
     }
   };
 
-  const getProcessingStatus = () => {
-    if (isProcessing || (isBatchProcessing && !page.extracted_text)) return 'processing';
-    return page.processing_status || 'pending';
-  };
-
-  const getStatusColor = () => {
-    const status = getProcessingStatus();
-    switch (status) {
-      case 'completed': return theme.success || '#4CAF50';
-      case 'processing': return theme.warning || '#FF9800';
-      case 'failed': return theme.error;
-      default: return theme.textTertiary;
+  const getReviewStatusIcon = () => {
+    const reviewStatus = page.review_status || 'unreviewed';
+    switch (reviewStatus) {
+      case 'reviewed':
+        return {
+          icon: 'check-circle',
+          color: theme.success || '#4CAF50',
+        };
+      case 'needs_attention':
+        return {
+          icon: 'warning',
+          color: theme.warning || '#FF9800',
+        };
+      default: // unreviewed
+        return {
+          icon: 'radio-button-unchecked',
+          color: theme.textTertiary,
+        };
     }
   };
 
-  const getStatusIcon = () => {
-    const status = getProcessingStatus();
-    switch (status) {
-      case 'completed': return 'check-circle';
-      case 'processing': return 'hourglass-empty';
-      case 'failed': return 'error';
-      default: return 'radio-button-unchecked';
-    }
-  };
+  const reviewIcon = getReviewStatusIcon();
 
   return (
     <Pressable
@@ -97,12 +95,9 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
           <Text style={[styles.pageNumber, { color: theme.text }]}>
             Page {page.pageNumber}
           </Text>
-          <View style={styles.statusIndicator}>
-            <Icon 
-              name={getStatusIcon()} 
-              size={12} 
-              color={getStatusColor()} 
-            />
+          {/* Review Status Icon */}
+          <View style={styles.reviewIconContainer}>
+            <Icon name={reviewIcon.icon} size={16} color={reviewIcon.color} />
           </View>
         </View>
         <Pressable
@@ -139,18 +134,18 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
                 </Pressable>
               )}
             </View>
-            <Pressable 
+            <Pressable
               onPress={handleTextPress}
               style={styles.textPressableArea}
             >
-              <Text 
+              <Text
                 style={[
                   IS_LARGE_SCREEN ? styles.extractedTextLarge : styles.extractedText,
                   { color: theme.text }
-                ]} 
+                ]}
                 numberOfLines={showFullText ? undefined : (IS_LARGE_SCREEN ? 5 : 3)}
               >
-                {page.edited_text || page.extracted_text}
+                {page.edited_text || page.extracted_text || ''}
               </Text>
               {page.edited_text && (
                 <View style={styles.editedBadge}>
@@ -158,13 +153,13 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
                   <Text style={[IS_LARGE_SCREEN ? styles.editedTextLarge : styles.editedTextSmall, { color: theme.success }]}>Edited</Text>
                 </View>
               )}
-              {(page.edited_text || page.extracted_text).length > 100 && (
+              {((page.edited_text || page.extracted_text || '').length > 100) && (
                 <Text style={[IS_LARGE_SCREEN ? styles.expandTextLarge : styles.expandText, { color: theme.primary }]}>
                   {showFullText ? (IS_WEB ? 'Click to collapse' : 'Tap to collapse') : (IS_WEB ? 'Click to expand' : 'Tap to expand')}
                 </Text>
               )}
             </Pressable>
-            {page.ai_confidence && (
+            {(page.ai_confidence !== null && page.ai_confidence !== undefined) && (
               <Text style={[styles.confidenceText, { color: theme.textTertiary }]}>
                 Confidence: {Math.round(page.ai_confidence * 100)}%
               </Text>
@@ -221,8 +216,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  statusIndicator: {
-    marginLeft: 6,
+  reviewIconContainer: {
+    marginLeft: 8,
   },
   deletePageButton: {
     padding: 4,
