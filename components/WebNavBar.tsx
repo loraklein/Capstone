@@ -13,19 +13,22 @@ export default function WebNavBar() {
   const pathname = usePathname();
   const { signOut, user } = useAuth();
 
-  // Only show on web
+  // Only show on web and when user is authenticated
   if (!IS_WEB) {
     return null;
   }
 
+  // Hide on landing page and auth pages
+  const isLandingPage = pathname === '/landing';
+  const isAuthPage = pathname.startsWith('/auth');
+
+  if (isLandingPage || isAuthPage || !user) {
+    return null;
+  }
+
+  const isRecentPage = pathname.startsWith('/(tabs)/recent') || pathname.startsWith('/recent');
   const isProjectsPage = pathname === '/' || pathname.startsWith('/(tabs)') && !pathname.includes('recent') && !pathname.includes('settings');
   const isSettingsPage = pathname.startsWith('/(tabs)/settings') || pathname.startsWith('/settings');
-
-  const handleSignOut = async () => {
-    await signOut();
-  };
-
-  const isRecentPage = pathname.startsWith('/(tabs)/recent');
 
   return (
     <View style={[styles.navbar, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
@@ -80,17 +83,18 @@ export default function WebNavBar() {
         {/* User Menu */}
         <View style={styles.userMenu}>
           {user && (
-            <>
-              <Text style={[styles.userEmail, { color: theme.textSecondary }]}>
-                {user.email}
+            <Pressable
+              style={({ pressed }) => [
+                styles.signOutButton,
+                { backgroundColor: pressed ? theme.secondary : 'transparent' },
+              ]}
+              onPress={signOut}
+            >
+              <Icon name="logout" size={18} color={theme.text} />
+              <Text style={[styles.signOutText, { color: theme.text }]}>
+                Sign Out
               </Text>
-              <Pressable
-                style={[styles.signOutButton, { backgroundColor: theme.secondary }]}
-                onPress={handleSignOut}
-              >
-                <Icon name="logout" size={20} color={theme.text} />
-              </Pressable>
-            </>
+            </Pressable>
           )}
         </View>
       </View>
@@ -146,17 +150,17 @@ const styles = StyleSheet.create({
   userMenu: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-  },
-  userEmail: {
-    fontSize: 14,
-    maxWidth: 200,
   },
   signOutButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+  },
+  signOutText: {
+    fontSize: 14,
+    fontWeight: '500',
   },
 });

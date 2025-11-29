@@ -95,7 +95,7 @@ export default function ReviewProgressBar({
             onPress={() => onFilterChange('unreviewed')}
           >
             <Icon
-              name="radio-button-unchecked"
+              name="fiber-manual-record"
               size={14}
               color={currentFilter === 'unreviewed' ? 'white' : textTertiary}
             />

@@ -8,27 +8,30 @@ interface ThemeColors {
   background: string;
   surface: string;
   card: string;
-  
+
   // Text colors
   text: string;
   textSecondary: string;
   textTertiary: string;
-  
+
   // Interactive elements
   primary: string;
   primaryText: string;
   secondary: string;
   secondaryText: string;
-  
+
   // Borders and dividers
   border: string;
   divider: string;
-  
+
   // Status colors
   success: string;
   error: string;
   warning: string;
-  
+
+  // Accent colors
+  accent: string;
+
   // Overlay
   overlay: string;
 }
@@ -56,6 +59,7 @@ const lightTheme: ThemeColors = {
   success: '#4A7C59',
   error: '#C14A4A',
   warning: '#B8860B',
+  accent: '#AA8C3C',
   overlay: 'rgba(55, 53, 47, 0.3)',
 };
 
@@ -75,6 +79,7 @@ const darkTheme: ThemeColors = {
   success: '#6B8E7B',
   error: '#D15A5A',
   warning: '#D4A017',
+  accent: '#C9A84D',
   overlay: 'rgba(25, 25, 25, 0.7)',
 };
 

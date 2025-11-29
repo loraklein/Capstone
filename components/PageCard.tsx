@@ -77,7 +77,7 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
         };
       default: // unreviewed
         return {
-          icon: 'radio-button-unchecked',
+          icon: 'fiber-manual-record',
           color: theme.textTertiary,
         };
     }

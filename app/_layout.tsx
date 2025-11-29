@@ -84,8 +84,9 @@ function StackLayout() {
     if (loading) return;
 
     const inAuthGroup = segments[0] === 'auth';
+    const onLandingPage = segments[0] === 'landing';
 
-    if (!user && !inAuthGroup) {
+    if (!user && !inAuthGroup && !onLandingPage) {
       // Save the current path for redirect after login
       const currentPath = segments.join('/');
       if (currentPath && Platform.OS === 'web') {
@@ -93,8 +94,12 @@ function StackLayout() {
         const fullPath = window.location.pathname + window.location.search;
         localStorage.setItem('redirectAfterLogin', fullPath);
       }
-      // Redirect to sign in if not authenticated
-      router.replace('/auth/signin');
+      // Redirect to landing page on web, sign in on mobile
+      if (Platform.OS === 'web') {
+        router.replace('/landing');
+      } else {
+        router.replace('/auth/signin');
+      }
     } else if (user && inAuthGroup) {
       // Check if there's a redirect URL saved
       if (Platform.OS === 'web') {
@@ -106,6 +111,9 @@ function StackLayout() {
         }
       }
       // Default: Redirect to app if authenticated
+      router.replace('/');
+    } else if (user && onLandingPage) {
+      // If user is logged in and visits landing page, redirect to app
       router.replace('/');
     }
   }, [user, segments, loading]);
@@ -142,23 +150,29 @@ function StackLayout() {
             headerTitleAlign: 'center',
           }}
         >
-        <Stack.Screen 
-          name="auth/signin" 
-          options={{ 
+        <Stack.Screen
+          name="landing"
+          options={{
             headerShown: false,
-          }} 
+          }}
         />
-        <Stack.Screen 
-          name="auth/signup" 
-          options={{ 
+        <Stack.Screen
+          name="auth/signin"
+          options={{
             headerShown: false,
-          }} 
+          }}
         />
-        <Stack.Screen 
-          name="(tabs)" 
-          options={{ 
+        <Stack.Screen
+          name="auth/signup"
+          options={{
             headerShown: false,
-          }} 
+          }}
+        />
+        <Stack.Screen
+          name="(tabs)"
+          options={{
+            headerShown: false,
+          }}
         />
         <Stack.Screen 
           name="add-project" 

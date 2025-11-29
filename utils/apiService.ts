@@ -67,8 +67,6 @@ export class ApiService {
       defaultHeaders['Authorization'] = `Bearer ${accessToken}`;
     }
 
-    console.log('[apiService] Making request to:', url, 'method:', options.method || 'GET');
-
     const response = await fetch(url, {
       ...options,
       headers: {
@@ -77,8 +75,6 @@ export class ApiService {
       },
     });
 
-    console.log('[apiService] Response status:', response.status, response.statusText);
-
     if (!response.ok) {
       const errorText = await response.text();
       console.error('[apiService] Error response:', errorText);
@@ -86,7 +82,6 @@ export class ApiService {
     }
 
     const data = await response.json();
-    console.log('[apiService] Response data:', data);
     return data;
   }
 

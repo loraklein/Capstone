@@ -46,15 +46,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('[AuthContext] Auth state changed:', event, session ? 'has session' : 'no session');
-
       // Handle token refresh errors - don't log out immediately
       if (event === 'TOKEN_REFRESHED' && !session) {
         console.warn('[AuthContext] Token refresh failed, attempting to restore session');
         // Try to get the session one more time
         const { data: { session: restoredSession } } = await supabase.auth.getSession();
         if (restoredSession) {
-          console.log('[AuthContext] Session restored successfully');
           setSession(restoredSession);
           setUser(restoredSession.user);
           saveSession(restoredSession);
@@ -64,7 +61,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Only clear session on explicit sign out
       if (event === 'SIGNED_OUT') {
-        console.log('[AuthContext] User signed out');
         setSession(null);
         setUser(null);
         clearSession();
@@ -206,14 +202,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Clear session storage
       await clearSession();
-      
-      // On web, redirect to sign in instead of reloading
-      if (Platform.OS === 'web') {
-        // Use router to navigate to sign in page
-        setTimeout(() => {
-          window.location.href = '/auth/signin';
-        }, 100);
-      }
+
+      // Navigation will be handled by _layout.tsx useEffect watching user state
     } catch (error) {
       console.error('Error in signOut:', error);
       // Even if there's an error, clear the local state
