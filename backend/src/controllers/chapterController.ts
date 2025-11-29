@@ -224,6 +224,46 @@ export const deleteChapter = async (req: Request, res: Response) => {
   }
 };
 
+// Delete all chapters for a project
+export const deleteAllChapters = async (req: Request, res: Response) => {
+  try {
+    const { projectId } = req.params;
+    const userId = req.user?.id;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    // Verify project ownership
+    const { data: project, error: projectError } = await supabase
+      .from('projects')
+      .select('id')
+      .eq('id', projectId)
+      .eq('user_id', userId)
+      .single();
+
+    if (projectError || !project) {
+      return res.status(404).json({ error: 'Project not found' });
+    }
+
+    // Delete all chapters
+    const { error } = await supabase
+      .from('chapters')
+      .delete()
+      .eq('project_id', projectId);
+
+    if (error) {
+      console.error('Error deleting all chapters:', error);
+      return res.status(500).json({ error: 'Failed to delete chapters' });
+    }
+
+    res.json({ message: 'All chapters deleted successfully' });
+  } catch (error) {
+    console.error('Error in deleteAllChapters:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};
+
 // Reorder chapters
 export const reorderChapters = async (req: Request, res: Response) => {
   try {

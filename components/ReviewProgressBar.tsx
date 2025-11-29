@@ -62,7 +62,7 @@ export default function ReviewProgressBar({
         </Text>
         {needsAttention > 0 && (
           <Text style={[styles.warningText, { color: warningColor }]}>
-            {needsAttention} need attention
+            {needsAttention} need{needsAttention === 1 ? 's' : ''} attention
           </Text>
         )}
       </View>
@@ -124,7 +124,7 @@ export default function ReviewProgressBar({
               styles.filterButtonText,
               { color: currentFilter === 'needs_attention' ? 'white' : theme.text }
             ]}>
-              Needs Review ({needsAttention})
+              Needs Attention ({needsAttention})
             </Text>
           </Pressable>
 

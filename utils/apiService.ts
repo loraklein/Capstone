@@ -223,6 +223,12 @@ export class ApiService {
     });
   }
 
+  async deleteAllChapters(projectId: string): Promise<any> {
+    return this.makeRequest(`/chapters/project/${projectId}/all`, {
+      method: 'DELETE',
+    });
+  }
+
   async reorderChapters(projectId: string, chapterIds: string[]): Promise<any> {
     return this.makeRequest(`/chapters/project/${projectId}/reorder`, {
       method: 'PUT',

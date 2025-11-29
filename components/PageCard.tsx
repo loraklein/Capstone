@@ -129,7 +129,7 @@ export default function PageCard({ page, onView, onDelete, onProcessAI, onEditTe
                     onEditText(page);
                   }}
                 >
-                  <Icon name="edit" size={14} color="white" />
+                  <Icon name="edit" size={16} color="white" />
                   <Text style={styles.editButtonText}>Edit</Text>
                 </Pressable>
               )}
@@ -243,14 +243,14 @@ const styles = StyleSheet.create({
   editButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 4,
-    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 6,
   },
   editButtonText: {
     color: 'white',
-    fontSize: 10,
+    fontSize: 13,
     fontWeight: '600',
   },
   textPressableArea: {

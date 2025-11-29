@@ -25,6 +25,7 @@ import PhotoSourceSelector from '../../components/PhotoSourceSelector';
 import PhotoViewer from '../../components/PhotoViewer';
 import PrintGuidanceModal from '../../components/PrintGuidanceModal';
 import ProjectHeader from '../../components/ProjectHeader';
+import ReorderWarningModal from '../../components/ReorderWarningModal';
 import UploadProgressModal from '../../components/UploadProgressModal';
 import WebFeaturesBanner from '../../components/WebFeaturesBanner';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -64,7 +65,10 @@ export default function ProjectDetailScreen() {
   const { isReorderMode, handleToggleReorderMode } = useReorderMode();
   const handleExportSuccess = (type: 'pdf' | 'book' | 'custom') => {
     setExportType(type);
-    setShowPrintGuidance(true);
+    // Only show print guidance for book exports
+    if (type === 'book') {
+      setShowPrintGuidance(true);
+    }
   };
 
   const { hasPagesWithPhotos, handleExportPdf } = usePdfExport({ projectName, description, capturedPages, generatePdf, onExportSuccess: handleExportSuccess });
@@ -80,6 +84,7 @@ export default function ProjectDetailScreen() {
   const [exportType, setExportType] = useState<'pdf' | 'book' | 'custom'>('pdf');
   const [reviewStats, setReviewStats] = useState({ total: 0, reviewed: 0, needsAttention: 0, unreviewed: 0, percentComplete: 0 });
   const [reviewFilter, setReviewFilter] = useState<'all' | 'unreviewed' | 'needs_attention' | 'reviewed'>('all');
+  const [showReorderWarning, setShowReorderWarning] = useState(false);
 
   const handleBatchProcess = async () => {
     if (isBatchProcessing) return;
@@ -120,6 +125,50 @@ export default function ProjectDetailScreen() {
   const handleCloseTextEditor = () => {
     setShowTextEditor(false);
     setEditingPage(null);
+  };
+
+  const handleReorderModeToggle = async () => {
+    // If we're exiting reorder mode, just toggle it off
+    if (isReorderMode) {
+      handleToggleReorderMode();
+      return;
+    }
+
+    // Check if there are chapters before entering reorder mode
+    try {
+      const { apiService } = await import('../../utils/apiService');
+      const chapters = await apiService.getProjectChapters(projectId);
+
+      if (chapters && chapters.length > 0) {
+        // Show warning modal if chapters exist
+        setShowReorderWarning(true);
+      } else {
+        // No chapters, safe to enter reorder mode
+        handleToggleReorderMode();
+      }
+    } catch (error) {
+      console.log('Error checking chapters:', error);
+      // If there's an error, allow reorder mode anyway
+      handleToggleReorderMode();
+    }
+  };
+
+  const handleConfirmReorder = async () => {
+    // Delete all chapters
+    try {
+      const { apiService } = await import('../../utils/apiService');
+      await apiService.deleteAllChapters(projectId);
+    } catch (error) {
+      console.log('Error deleting chapters:', error);
+    }
+
+    // Close modal and enter reorder mode
+    setShowReorderWarning(false);
+    handleToggleReorderMode();
+  };
+
+  const handleCancelReorder = () => {
+    setShowReorderWarning(false);
   };
 
   const handleViewCombinedText = () => {
@@ -407,7 +456,7 @@ export default function ProjectDetailScreen() {
                   >
                     <Icon name="description" size={16} color={theme.primary} />
                     <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
-                      View All Text
+                      View Combined Text
                     </Text>
                   </Pressable>
                 )}
@@ -419,7 +468,7 @@ export default function ProjectDetailScreen() {
                       styles.secondaryActionButton,
                       { backgroundColor: isReorderMode ? theme.primary : 'transparent' }
                     ]}
-                    onPress={handleToggleReorderMode}
+                    onPress={handleReorderModeToggle}
                   >
                     <Icon
                       name={isReorderMode ? "check" : "reorder"}
@@ -430,7 +479,7 @@ export default function ProjectDetailScreen() {
                       styles.secondaryActionButtonText,
                       { color: isReorderMode ? "white" : theme.primary }
                     ]}>
-                      {isReorderMode ? "Done" : "Reorder"}
+                      {isReorderMode ? "Done" : "Reorder Pages"}
                     </Text>
                   </Pressable>
                 )}
@@ -479,24 +528,81 @@ export default function ProjectDetailScreen() {
         <View style={[styles.instructionBanner, { backgroundColor: theme.secondary }]}>
           <Icon name="info-outline" size={16} color={theme.textSecondary} />
           <Text style={[styles.instructionText, { color: theme.textSecondary }]}>
-            Press and hold, then drag to reorder pages
+            {Platform.OS === 'web' ? 'Use arrow buttons to reorder pages' : 'Press and hold, then drag to reorder pages'}
           </Text>
         </View>
       )}
 
       {capturedPages.length === 0 ? (
         <EmptyState onPress={handleAddPage} />
+      ) : isReorderMode && Platform.OS === 'web' ? (
+        <FlatList
+          data={capturedPages}
+          renderItem={({ item }) => {
+            const currentIndex = capturedPages.findIndex(p => p.id === item.id);
+            const handleMoveUp = () => {
+              if (currentIndex > 0) {
+                const newPages = [...capturedPages];
+                [newPages[currentIndex - 1], newPages[currentIndex]] = [newPages[currentIndex], newPages[currentIndex - 1]];
+                reorderPagesWithArray(newPages);
+              }
+            };
+            const handleMoveDown = () => {
+              if (currentIndex < capturedPages.length - 1) {
+                const newPages = [...capturedPages];
+                [newPages[currentIndex], newPages[currentIndex + 1]] = [newPages[currentIndex + 1], newPages[currentIndex]];
+                reorderPagesWithArray(newPages);
+              }
+            };
+            return (
+              <DraggablePageCard
+                page={item}
+                drag={() => {}}
+                isActive={false}
+                onView={handleViewPage}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
+                isFirst={currentIndex === 0}
+                isLast={currentIndex === capturedPages.length - 1}
+              />
+            );
+          }}
+          keyExtractor={(item: CapturedPage) => item.id}
+          contentContainerStyle={styles.pagesGrid}
+          showsVerticalScrollIndicator={true}
+        />
       ) : isReorderMode ? (
         <DraggableFlatList<CapturedPage>
           data={capturedPages}
-          renderItem={({ item, drag, isActive }: { item: CapturedPage; drag: () => void; isActive: boolean }) => (
-            <DraggablePageCard
-              page={item}
-              drag={drag}
-              isActive={isActive}
-              onView={handleViewPage}
-            />
-          )}
+          renderItem={({ item, drag, isActive }: { item: CapturedPage; drag: () => void; isActive: boolean }) => {
+            const currentIndex = capturedPages.findIndex(p => p.id === item.id);
+            const handleMoveUp = () => {
+              if (currentIndex > 0) {
+                const newPages = [...capturedPages];
+                [newPages[currentIndex - 1], newPages[currentIndex]] = [newPages[currentIndex], newPages[currentIndex - 1]];
+                reorderPagesWithArray(newPages);
+              }
+            };
+            const handleMoveDown = () => {
+              if (currentIndex < capturedPages.length - 1) {
+                const newPages = [...capturedPages];
+                [newPages[currentIndex], newPages[currentIndex + 1]] = [newPages[currentIndex + 1], newPages[currentIndex]];
+                reorderPagesWithArray(newPages);
+              }
+            };
+            return (
+              <DraggablePageCard
+                page={item}
+                drag={drag}
+                isActive={isActive}
+                onView={handleViewPage}
+                onMoveUp={handleMoveUp}
+                onMoveDown={handleMoveDown}
+                isFirst={currentIndex === 0}
+                isLast={currentIndex === capturedPages.length - 1}
+              />
+            );
+          }}
           keyExtractor={(item: CapturedPage) => item.id}
           onDragEnd={({ data }: { data: CapturedPage[] }) => {
             reorderPagesWithArray(data);
@@ -620,6 +726,13 @@ export default function ProjectDetailScreen() {
         visible={showPrintGuidance}
         exportType={exportType}
         onClose={() => setShowPrintGuidance(false)}
+      />
+
+      {/* Reorder Warning Modal */}
+      <ReorderWarningModal
+        visible={showReorderWarning}
+        onConfirm={handleConfirmReorder}
+        onCancel={handleCancelReorder}
       />
     </View>
   );

@@ -145,7 +145,7 @@ export default function ExportOptionsModal({
                 <Icon name="tune" size={28} color={theme.primary} />
               </View>
               <View style={styles.optionContent}>
-                <Text style={[styles.optionTitle, { color: theme.text }]}>Customize PDF</Text>
+                <Text style={[styles.optionTitle, { color: theme.text }]}>Custom PDF</Text>
                 <Text style={[styles.optionDescription, { color: theme.textSecondary }]}>
                   Choose fonts, text size, and formatting options
                 </Text>

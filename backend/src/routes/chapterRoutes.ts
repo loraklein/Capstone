@@ -4,6 +4,7 @@ import {
   createChapter,
   updateChapter,
   deleteChapter,
+  deleteAllChapters,
   reorderChapters,
   suggestChapters,
   executeReorganization,
@@ -18,6 +19,7 @@ router.post('/project/:projectId', createChapter);
 router.post('/project/:projectId/reorganize', executeReorganization);
 router.put('/project/:projectId/reorder', reorderChapters);
 router.put('/:chapterId', updateChapter);
+router.delete('/project/:projectId/all', deleteAllChapters);
 router.delete('/:chapterId', deleteChapter);
 
 export default router;

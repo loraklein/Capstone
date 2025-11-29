@@ -61,7 +61,7 @@ export default function CustomPdfSettingsModal({
         <View style={[styles.modal, { backgroundColor: theme.surface }]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.text }]}>Customize PDF</Text>
+            <Text style={[styles.title, { color: theme.text }]}>Custom PDF</Text>
             <Pressable onPress={onDismiss} style={styles.closeButton}>
               <Icon name="close" size={24} color={theme.text} />
             </Pressable>

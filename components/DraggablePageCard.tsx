@@ -2,24 +2,34 @@ import { MaterialIcons } from '@expo/vector-icons';
 import Icon from '../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
 import { CapturedPage } from '../types';
 import { formatDate } from '../utils/dateUtils';
 import PagePhoto from './PagePhoto';
+
+const IS_WEB = Platform.OS === 'web';
 
 interface DraggablePageCardProps {
   page: CapturedPage;
   drag: () => void;
   isActive: boolean;
   onView: (page: CapturedPage) => void;
+  onMoveUp?: () => void;
+  onMoveDown?: () => void;
+  isFirst?: boolean;
+  isLast?: boolean;
 }
 
-export default function DraggablePageCard({ 
-  page, 
-  drag, 
+export default function DraggablePageCard({
+  page,
+  drag,
   isActive,
-  onView
+  onView,
+  onMoveUp,
+  onMoveDown,
+  isFirst,
+  isLast
 }: DraggablePageCardProps) {
   const { theme } = useTheme();
 
@@ -30,7 +40,19 @@ export default function DraggablePageCard({
     }
   };
 
+  const handleMoveUp = () => {
+    if (onMoveUp && !isFirst) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onMoveUp();
+    }
+  };
 
+  const handleMoveDown = () => {
+    if (onMoveDown && !isLast) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      onMoveDown();
+    }
+  };
 
   const handleLongPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -64,12 +86,31 @@ export default function DraggablePageCard({
         
         {!isActive && (
           <View style={styles.controls}>
-            <View style={styles.reorderIcon}>
-              <Icon name="drag-handle" size={24} color={theme.textTertiary} />
-            </View>
+            {IS_WEB ? (
+              <View style={styles.webControls}>
+                <Pressable
+                  style={[styles.arrowButton, isFirst && styles.arrowButtonDisabled]}
+                  onPress={handleMoveUp}
+                  disabled={isFirst}
+                >
+                  <Icon name="arrow-upward" size={20} color={isFirst ? theme.border : theme.textTertiary} />
+                </Pressable>
+                <Pressable
+                  style={[styles.arrowButton, isLast && styles.arrowButtonDisabled]}
+                  onPress={handleMoveDown}
+                  disabled={isLast}
+                >
+                  <Icon name="arrow-downward" size={20} color={isLast ? theme.border : theme.textTertiary} />
+                </Pressable>
+              </View>
+            ) : (
+              <View style={styles.reorderIcon}>
+                <Icon name="drag-handle" size={24} color={theme.textTertiary} />
+              </View>
+            )}
           </View>
         )}
-        
+
         {isActive && (
           <View style={styles.dragIndicator}>
             <Icon name="drag-handle" size={20} color="white" />
@@ -109,6 +150,16 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  webControls: {
+    flexDirection: 'column',
+    gap: 4,
+  },
+  arrowButton: {
+    padding: 4,
+  },
+  arrowButtonDisabled: {
+    opacity: 0.3,
   },
   deleteButton: {
     padding: 4,

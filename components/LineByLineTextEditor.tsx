@@ -313,9 +313,14 @@ export default function LineByLineTextEditor({
 
             {/* Text Editor Section */}
             <View style={IS_LARGE_SCREEN ? styles.editorSectionWide : styles.editorSection}>
-              <Text style={[styles.sectionLabel, styles.editorLabel, { color: theme.textSecondary }]}>
-                Edit All Text
-              </Text>
+              <View style={styles.photoHeader}>
+                <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
+                  Extracted Text
+                </Text>
+                <View style={styles.zoomControls}>
+                  {/* Empty space to match photo header height */}
+                </View>
+              </View>
               <TextInput
                 style={[
                   IS_LARGE_SCREEN ? styles.textInputWide : styles.textInput,
@@ -344,6 +349,9 @@ export default function LineByLineTextEditor({
 
         {/* Action Buttons */}
         <View style={[styles.footer, { borderTopColor: theme.divider }]}>
+          <Text style={[styles.footerHint, { color: theme.textTertiary }]}>
+            Manually edit the text or use AI Auto Correct to fix spelling and formatting
+          </Text>
           <View style={IS_LARGE_SCREEN ? styles.buttonContainerWide : styles.buttonContainerMobile}>
             <Pressable
               style={[
@@ -355,27 +363,30 @@ export default function LineByLineTextEditor({
               <Text style={[styles.footerButtonText, { color: theme.text }]}>Cancel</Text>
             </Pressable>
 
-            {IS_LARGE_SCREEN && (
-              <Pressable
-                style={[
-                  styles.footerButtonWide,
-                  { backgroundColor: theme.accent || theme.secondary, borderColor: theme.border }
-                ]}
-                onPress={handleFixText}
-                disabled={fixing || !editedText.trim()}
-              >
-                {fixing ? (
-                  <ActivityIndicator color={theme.text} />
-                ) : (
-                  <View style={styles.buttonWithIcon}>
-                    <Icon name="auto-awesome" size={18} color={theme.text} />
-                    <Text style={[styles.footerButtonText, { color: theme.text, marginLeft: 6 }]}>
-                      Auto Correct
-                    </Text>
-                  </View>
-                )}
-              </Pressable>
-            )}
+            <Pressable
+              style={[
+                IS_LARGE_SCREEN ? styles.footerButtonWide : styles.footerButton,
+                {
+                  backgroundColor: 'transparent',
+                  borderWidth: 2,
+                  borderColor: (fixing || !editedText.trim()) ? theme.textTertiary : theme.primary,
+                  opacity: (fixing || !editedText.trim()) ? 0.5 : 1,
+                }
+              ]}
+              onPress={handleFixText}
+              disabled={fixing || !editedText.trim()}
+            >
+              {fixing ? (
+                <ActivityIndicator color={theme.primary} />
+              ) : (
+                <View style={styles.buttonWithIcon}>
+                  <Icon name="auto-awesome" size={18} color={theme.primary} />
+                  <Text style={[styles.footerButtonText, { color: theme.primary, marginLeft: 6 }]}>
+                    {IS_LARGE_SCREEN ? 'Auto Correct' : 'Fix'}
+                  </Text>
+                </View>
+              )}
+            </Pressable>
 
             <Pressable
               style={[
@@ -497,6 +508,7 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 24,
     minHeight: SCREEN_HEIGHT * 0.7,
+    alignItems: 'flex-start',
   },
   singleColumnLayout: {
     flexDirection: 'column',
@@ -507,6 +519,7 @@ const styles = StyleSheet.create({
   photoSectionWide: {
     flex: 1,
     paddingRight: 12,
+    paddingTop: 0,
   },
   photoHeader: {
     flexDirection: 'row',
@@ -524,6 +537,7 @@ const styles = StyleSheet.create({
   zoomControls: {
     flexDirection: 'row',
     gap: 8,
+    minHeight: 32,
   },
   zoomButton: {
     width: 32,
@@ -571,6 +585,7 @@ const styles = StyleSheet.create({
   editorSectionWide: {
     flex: 1,
     paddingLeft: 12,
+    paddingTop: 0,
   },
   textInput: {
     borderWidth: 1,
@@ -596,6 +611,12 @@ const styles = StyleSheet.create({
   footer: {
     padding: 16,
     borderTopWidth: 1,
+  },
+  footerHint: {
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 12,
+    fontStyle: 'italic',
   },
   buttonContainerMobile: {
     flexDirection: 'row',
