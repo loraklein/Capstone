@@ -199,7 +199,15 @@ export default function LineByLineTextEditor({
       setFixing(true);
       const result = await apiService.correctPageText(page.id);
       setCorrectedText(result.corrected);
-      setShowCorrectionPreview(true);
+
+      // On large screens, show preview modal. On mobile, apply directly
+      if (IS_LARGE_SCREEN) {
+        setShowCorrectionPreview(true);
+      } else {
+        // Automatically apply correction on mobile
+        setEditedText(result.corrected);
+        setCorrectedText('');
+      }
     } catch (error) {
       console.error('Error correcting text:', error);
       // TODO: Show error message to user
@@ -350,7 +358,7 @@ export default function LineByLineTextEditor({
         {/* Action Buttons */}
         <View style={[styles.footer, { borderTopColor: theme.divider }]}>
           <Text style={[styles.footerHint, { color: theme.textTertiary }]}>
-            Manually edit the text or use AI Auto Correct to fix spelling and formatting
+            You can manually compare and edit the text or use AI Auto Correct to fix spelling and formatting
           </Text>
           <View style={IS_LARGE_SCREEN ? styles.buttonContainerWide : styles.buttonContainerMobile}>
             <Pressable
