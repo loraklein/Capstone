@@ -61,7 +61,7 @@ export default function ProjectDetailScreen() {
   const { isGenerating, generatePdf } = usePdfGeneration(projectId);
   const { showCamera, handleAddPage, handleCameraCapture, handleCameraClose, uploadProgress } = useCameraManagement({ addPage });
   const { showPhotoViewer, selectedPage, handleViewPage, handleClosePhotoViewer } = usePhotoViewer();
-  const { showDeleteModal, handleDeletePage, confirmDelete, cancelDelete } = useDeleteConfirmation({ deletePage, refreshProjects });
+  const { showDeleteModal, handleDeletePage, confirmDelete, cancelDelete, isDeleting } = useDeleteConfirmation({ deletePage, refreshProjects });
   const { isReorderMode, handleToggleReorderMode } = useReorderMode();
   const handleExportSuccess = (type: 'pdf' | 'book' | 'custom') => {
     setExportType(type);
@@ -419,10 +419,9 @@ export default function ProjectDetailScreen() {
                 </View>
               )}
 
-              {/* Secondary actions row */}
-              <View style={[styles.buttonRow, { marginTop: hasUnreviewedPages ? 8 : 0 }]}>
-                {/* Process All - if there are still unprocessed pages */}
-                {hasUnprocessedPages && (
+              {/* Secondary actions row - Process All if still unprocessed pages */}
+              {hasUnprocessedPages && (
+                <View style={[styles.buttonRow, { marginTop: hasUnreviewedPages ? 8 : 0 }]}>
                   <Pressable
                     style={[
                       styles.secondaryActionButton,
@@ -446,68 +445,74 @@ export default function ProjectDetailScreen() {
                       {isBatchProcessing ? 'Processing...' : 'Process All'}
                     </Text>
                   </Pressable>
-                )}
-
-                {/* View All Text */}
-                {hasPagesWithText && (
-                  <Pressable
-                    style={styles.secondaryActionButton}
-                    onPress={handleViewCombinedText}
-                  >
-                    <Icon name="description" size={16} color={theme.primary} />
-                    <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
-                      View Combined Text
-                    </Text>
-                  </Pressable>
-                )}
-
-                {/* Reorder - show after some reviewing is done */}
-                {isReviewingComplete && capturedPages.length > 1 && (
-                  <Pressable
-                    style={[
-                      styles.secondaryActionButton,
-                      { backgroundColor: isReorderMode ? theme.primary : 'transparent' }
-                    ]}
-                    onPress={handleReorderModeToggle}
-                  >
-                    <Icon
-                      name={isReorderMode ? "check" : "reorder"}
-                      size={16}
-                      color={isReorderMode ? "white" : theme.primary}
-                    />
-                    <Text style={[
-                      styles.secondaryActionButtonText,
-                      { color: isReorderMode ? "white" : theme.primary }
-                    ]}>
-                      {isReorderMode ? "Done" : "Reorder Pages"}
-                    </Text>
-                  </Pressable>
-                )}
-              </View>
+                </View>
+              )}
 
               {/* STAGE 3: Ready to Organize and Export (show when reviewing is mostly done) */}
               {isReviewingComplete && (
-                <View style={[styles.buttonRow, { marginTop: 8 }]}>
-                  {/* Organize Sections */}
-                  <Pressable
-                    style={[styles.secondaryActionButton, { borderColor: theme.primary, borderWidth: 2 }]}
-                    onPress={() => setShowChapterModal(true)}
-                  >
-                    <Icon name="bookmark" size={16} color={theme.primary} />
-                    <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
-                      Organize Sections
-                    </Text>
-                  </Pressable>
+                <>
+                  {/* Row 1: Reorder Pages, Organize Sections */}
+                  <View style={[styles.buttonRow, { marginTop: hasUnreviewedPages || hasUnprocessedPages ? 8 : 0 }]}>
+                    {/* Reorder Pages */}
+                    {capturedPages.length > 1 && (
+                      <Pressable
+                        style={[
+                          styles.secondaryActionButton,
+                          { backgroundColor: isReorderMode ? theme.primary : 'transparent' }
+                        ]}
+                        onPress={handleReorderModeToggle}
+                      >
+                        <Icon
+                          name={isReorderMode ? "check" : "reorder"}
+                          size={16}
+                          color={isReorderMode ? "white" : theme.primary}
+                        />
+                        <Text style={[
+                          styles.secondaryActionButtonText,
+                          { color: isReorderMode ? "white" : theme.primary }
+                        ]}>
+                          {isReorderMode ? "Done" : "Reorder Pages"}
+                        </Text>
+                      </Pressable>
+                    )}
 
-                  {/* Export PDF */}
-                  {hasPagesWithPhotos && (
-                    <ExportPdfButton
-                      onPress={handleExportClick}
-                      disabled={isGenerating}
-                      isGenerating={isGenerating}
-                    />
-                  )}
-                </View>
+                    {/* Organize Sections */}
+                    <Pressable
+                      style={styles.secondaryActionButton}
+                      onPress={() => setShowChapterModal(true)}
+                    >
+                      <Icon name="bookmark" size={16} color={theme.primary} />
+                      <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
+                        Organize Sections
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Row 2: View Combined Text, Export PDF */}
+                  <View style={[styles.buttonRow, { marginTop: 8 }]}>
+                    {/* View Combined Text */}
+                    {hasPagesWithText && (
+                      <Pressable
+                        style={styles.secondaryActionButton}
+                        onPress={handleViewCombinedText}
+                      >
+                        <Icon name="description" size={16} color={theme.primary} />
+                        <Text style={[styles.secondaryActionButtonText, { color: theme.primary }]}>
+                          View Combined Text
+                        </Text>
+                      </Pressable>
+                    )}
+
+                    {/* Export PDF */}
+                    {hasPagesWithPhotos && (
+                      <ExportPdfButton
+                        onPress={handleExportClick}
+                        disabled={isGenerating}
+                        isGenerating={isGenerating}
+                      />
+                    )}
+                  </View>
+                </>
               )}
             </>
           )}
@@ -620,14 +625,16 @@ export default function ProjectDetailScreen() {
           ref={flatListRef}
           data={filteredPages}
           renderItem={({ item, index }) => (
-            <PageCard
-              page={item}
-              onView={handleViewPage}
-              onDelete={handleDeletePage}
-              onProcessAI={processPageWithAI}
-              onEditText={handleEditText}
-              isBatchProcessing={isBatchProcessing}
-            />
+            <View style={styles.pageCardWrapper}>
+              <PageCard
+                page={item}
+                onView={handleViewPage}
+                onDelete={handleDeletePage}
+                onProcessAI={processPageWithAI}
+                onEditText={handleEditText}
+                isBatchProcessing={isBatchProcessing}
+              />
+            </View>
           )}
           keyExtractor={(item) => item.id}
           numColumns={NUM_COLUMNS}
@@ -668,6 +675,7 @@ export default function ProjectDetailScreen() {
         onConfirm={confirmDelete}
         onCancel={cancelDelete}
         confirmStyle="destructive"
+        loading={isDeleting}
       />
 
       {editingPage && editingPage.photo_url && (
@@ -762,8 +770,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 10,
-    flex: 1,
-    minWidth: 200,
+    ...(SCREEN_WIDTH > 768 ? {} : { flex: 1 }), // Only stretch on mobile
   },
   primaryActionButtonText: {
     fontSize: 17,
@@ -807,6 +814,11 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 280,
     paddingHorizontal: 0,
+  },
+  pageCardWrapper: {
+    flex: 1,
+    maxWidth: 100 / NUM_COLUMNS + '%',
+    padding: 8,
   },
   instructionBanner: {
     flexDirection: 'row',

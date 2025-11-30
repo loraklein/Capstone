@@ -132,30 +132,8 @@ export default function ExportOptionsModal({
             <Icon name="chevron-right" size={24} color={theme.textTertiary} />
           </Pressable>
 
-          {/* Customize PDF Option - Web Only */}
-          {IS_WEB && onCustomPdf && (
-            <Pressable
-              style={[styles.option, { backgroundColor: theme.background, borderColor: theme.border }]}
-              onPress={() => {
-                onDismiss();
-                onCustomPdf();
-              }}
-            >
-              <View style={[styles.optionIcon, { backgroundColor: theme.secondary }]}>
-                <Icon name="tune" size={28} color={theme.primary} />
-              </View>
-              <View style={styles.optionContent}>
-                <Text style={[styles.optionTitle, { color: theme.text }]}>Custom PDF</Text>
-                <Text style={[styles.optionDescription, { color: theme.textSecondary }]}>
-                  Choose fonts, text size, and formatting options
-                </Text>
-              </View>
-              <Icon name="chevron-right" size={24} color={theme.textTertiary} />
-            </Pressable>
-          )}
-
-          {/* Create Printable Book Option - Web Only */}
-          {IS_WEB && onPrintBook && (
+          {/* Create Printable Book Option */}
+          {onPrintBook && (
             <Pressable
               style={[styles.option, { backgroundColor: theme.background, borderColor: theme.border }]}
               onPress={() => {

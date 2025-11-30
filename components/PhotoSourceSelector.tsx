@@ -1,4 +1,5 @@
 import * as ImagePicker from 'expo-image-picker';
+import * as ImageManipulator from 'expo-image-manipulator';
 import React, { useState } from 'react';
 import { Alert, Modal, Pressable, StyleSheet, Text, View, Platform } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -14,6 +15,27 @@ interface PhotoSourceSelectorProps {
 export default function PhotoSourceSelector({ visible, onCapture, onClose }: PhotoSourceSelectorProps) {
   const { theme } = useTheme();
   const [showCamera, setShowCamera] = useState(false);
+
+  // Helper function to convert image to JPEG format
+  const convertToJPEG = async (uri: string): Promise<string> => {
+    try {
+      // Use ImageManipulator to convert to JPEG (also handles HEIC)
+      // We don't need to resize, just convert format
+      const manipResult = await ImageManipulator.manipulateAsync(
+        uri,
+        [], // No transformations needed
+        {
+          compress: 0.8,
+          format: ImageManipulator.SaveFormat.JPEG,
+        }
+      );
+      return manipResult.uri;
+    } catch (error) {
+      console.error('Error converting image to JPEG:', error);
+      // If conversion fails, return original URI as fallback
+      return uri;
+    }
+  };
 
   const handleCameraPress = () => {
     setShowCamera(true);
@@ -39,13 +61,18 @@ export default function PhotoSourceSelector({ visible, onCapture, onClose }: Pho
         allowsEditing: false,
         quality: 0.8,
         allowsMultipleSelection: true,
+        exif: false, // Reduce overhead
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
+        // Convert all images to JPEG format (handles HEIC from iPhone camera roll)
+        const convertedUris = await Promise.all(
+          result.assets.map(asset => convertToJPEG(asset.uri))
+        );
+
         // If multiple images selected, pass array of URIs
-        // If single image, pass array for consistency (will be handled by useCameraManagement)
-        const uris = result.assets.map(asset => asset.uri);
-        onCapture(uris.length === 1 ? uris[0] : uris);
+        // If single image, pass single URI string
+        onCapture(convertedUris.length === 1 ? convertedUris[0] : convertedUris);
       }
     } catch (error) {
       console.error('Error picking image:', error);

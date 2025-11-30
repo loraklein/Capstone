@@ -10,7 +10,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
-  KeyboardAvoidingView,
+  Keyboard,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '../contexts/ThemeContext';
@@ -268,9 +268,11 @@ export default function LineByLineTextEditor({
           </Pressable>
         </View>
 
-        <ScrollView 
-          style={styles.content} 
+        <ScrollView
+          style={styles.content}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          contentContainerStyle={{ paddingBottom: IS_LARGE_SCREEN ? 0 : 20 }}
         >
           <View style={IS_LARGE_SCREEN ? styles.twoColumnLayout : styles.singleColumnLayout}>
             {/* Photo Section */}
@@ -336,7 +338,7 @@ export default function LineByLineTextEditor({
                     color: theme.text,
                     backgroundColor: theme.surface,
                     borderColor: theme.border,
-                    paddingBottom: IS_LARGE_SCREEN ? 12 : 120, // Extra padding at bottom for scrolling past keyboard
+                    paddingBottom: 12,
                   },
                 ]}
                 value={editedText}
@@ -347,6 +349,9 @@ export default function LineByLineTextEditor({
                 placeholder="Edit the extracted text..."
                 placeholderTextColor={theme.textTertiary}
                 scrollEnabled={true}
+                returnKeyType="done"
+                blurOnSubmit={true}
+                onSubmitEditing={() => Keyboard.dismiss()}
               />
               <Text style={[styles.charCount, { color: theme.textTertiary }]}>
                 {editedText.length} characters
@@ -409,7 +414,7 @@ export default function LineByLineTextEditor({
                 <ActivityIndicator color={theme.primaryText} />
               ) : (
                 <Text style={[styles.footerButtonText, { color: theme.primaryText }]}>
-                  Save Changes
+                  {IS_LARGE_SCREEN ? 'Save Changes' : 'Save'}
                 </Text>
               )}
             </Pressable>
@@ -483,6 +488,7 @@ export default function LineByLineTextEditor({
             </View>
           </Modal>
         )}
+
       </View>
     </Modal>
   );
@@ -556,7 +562,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoContainer: {
-    height: SCREEN_HEIGHT * 0.2, // Compact at 20% for mobile
+    height: SCREEN_HEIGHT * 0.15, // Compact at 15% for mobile to give more room for text input
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
@@ -600,7 +606,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 15,
-    height: SCREEN_HEIGHT * 0.2, // Match photo height on mobile
+    height: SCREEN_HEIGHT * 0.15, // Match photo height on mobile
     lineHeight: 22,
   },
   textInputWide: {

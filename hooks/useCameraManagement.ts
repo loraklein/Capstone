@@ -22,6 +22,9 @@ export function useCameraManagement({ addPage }: UseCameraManagementProps) {
 
   const handleCameraCapture = async (photoUri: string | string[]) => {
     try {
+      // Close the photo selector immediately
+      setShowCamera(false);
+
       // Handle both single and multiple image uploads
       if (Array.isArray(photoUri)) {
         // Multiple images: upload sequentially with progress tracking
@@ -37,11 +40,10 @@ export function useCameraManagement({ addPage }: UseCameraManagementProps) {
         setUploadProgress(null);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       } else {
-        // Single image - no progress needed
+        // Single image - upload silently without progress modal
         await addPage(photoUri);
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-      setShowCamera(false);
     } catch (error) {
       console.error('Error adding page:', error);
       setUploadProgress(null);

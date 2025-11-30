@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+    ActivityIndicator,
     Modal,
     Pressable,
     StyleSheet,
@@ -17,6 +18,7 @@ interface ConfirmationDialogProps {
   onConfirm: () => void;
   onCancel: () => void;
   confirmStyle?: 'default' | 'destructive';
+  loading?: boolean;
 }
 
 export default function ConfirmationDialog({
@@ -28,6 +30,7 @@ export default function ConfirmationDialog({
   onConfirm,
   onCancel,
   confirmStyle = 'default',
+  loading = false,
 }: ConfirmationDialogProps) {
   const { theme } = useTheme();
 
@@ -47,31 +50,46 @@ export default function ConfirmationDialog({
           
           <View style={[styles.buttonContainer, { borderTopColor: theme.divider }]}>
             <Pressable
-              style={[styles.button, styles.cancelButton, { borderRightColor: theme.divider }]}
+              style={[
+                styles.button,
+                styles.cancelButton,
+                { borderRightColor: theme.divider },
+                loading && { opacity: 0.5 },
+              ]}
               onPress={onCancel}
+              disabled={loading}
               accessibilityRole="button"
               accessibilityLabel={cancelText}
             >
               <Text style={[styles.cancelButtonText, { color: theme.textSecondary }]}>{cancelText}</Text>
             </Pressable>
-            
+
             <Pressable
               style={[
                 styles.button,
                 styles.confirmButton,
                 { borderLeftColor: theme.divider },
                 confirmStyle === 'destructive' && { backgroundColor: theme.error + '20' },
+                loading && { opacity: 0.5 },
               ]}
               onPress={onConfirm}
+              disabled={loading}
               accessibilityRole="button"
               accessibilityLabel={confirmText}
             >
-              <Text style={[
-                styles.confirmButtonText,
-                { color: confirmStyle === 'destructive' ? theme.error : theme.primary },
-              ]}>
-                {confirmText}
-              </Text>
+              {loading ? (
+                <ActivityIndicator
+                  size="small"
+                  color={confirmStyle === 'destructive' ? theme.error : theme.primary}
+                />
+              ) : (
+                <Text style={[
+                  styles.confirmButtonText,
+                  { color: confirmStyle === 'destructive' ? theme.error : theme.primary },
+                ]}>
+                  {confirmText}
+                </Text>
+              )}
             </Pressable>
           </View>
         </View>

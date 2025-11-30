@@ -8,6 +8,7 @@ interface UseDeleteConfirmationProps {
 export function useDeleteConfirmation({ deletePage, refreshProjects }: UseDeleteConfirmationProps) {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [pageToDelete, setPageToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeletePage = (pageId: string) => {
     setPageToDelete(pageId);
@@ -15,17 +16,27 @@ export function useDeleteConfirmation({ deletePage, refreshProjects }: UseDelete
   };
 
   const confirmDelete = async () => {
-    if (pageToDelete) {
-      await deletePage(pageToDelete);
-      await refreshProjects();
+    if (pageToDelete && !isDeleting) {
+      setIsDeleting(true);
+      try {
+        await deletePage(pageToDelete);
+        await refreshProjects();
+        setShowDeleteModal(false);
+        setPageToDelete(null);
+      } catch (error) {
+        console.error('Error deleting page:', error);
+        // Keep modal open on error so user can try again
+      } finally {
+        setIsDeleting(false);
+      }
     }
-    setShowDeleteModal(false);
-    setPageToDelete(null);
   };
 
   const cancelDelete = () => {
-    setShowDeleteModal(false);
-    setPageToDelete(null);
+    if (!isDeleting) {
+      setShowDeleteModal(false);
+      setPageToDelete(null);
+    }
   };
 
   return {
@@ -34,5 +45,6 @@ export function useDeleteConfirmation({ deletePage, refreshProjects }: UseDelete
     handleDeletePage,
     confirmDelete,
     cancelDelete,
+    isDeleting,
   };
 } 

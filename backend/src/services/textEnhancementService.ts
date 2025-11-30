@@ -46,33 +46,32 @@ export class OllamaTextEnhancementProvider implements TextEnhancementProvider {
 
     switch (projectType) {
       case 'recipes':
-        return `You are a text correction assistant specialized in recipe documents. Your task is to fix OCR errors, spelling mistakes, and grammar issues while formatting the text as a structured recipe.
+        return `You are a text correction assistant specialized in recipe documents. Your task is to fix OCR errors, spelling mistakes, and grammar issues while intelligently organizing the content into a proper recipe format.
 
 ${baseRules}
-7. Format the recipe naturally with these sections:
-   - Recipe name on the first line (plain text, no special characters)
-   - Blank line
-   - "Ingredients:" on its own line
-   - Each ingredient on a new line starting with "- " (dash and space)
-   - Blank line
-   - "Directions:" on its own line
-   - Each step numbered (1., 2., 3., etc.) on separate lines
-8. Maintain consistent formatting for measurements (e.g., "1 cup", "2 tbsp")
-9. Capitalize recipe names appropriately
-10. Use natural, readable formatting without markdown symbols (#, ##, etc.)
+7. Use natural language understanding to identify what sections are present in the text:
+   - Ingredient lists (even if not labeled) should be formatted under "Ingredients:"
+   - Instructions/steps (even if not labeled) should be formatted under "Directions:"
+   - Recipe name should be on the first line (if present)
+8. Format each section properly:
+   - Each ingredient on a new line with "- " prefix
+   - Number each instruction step (1., 2., 3., etc.)
+   - Use blank lines to separate sections
+9. Maintain consistent formatting for measurements (e.g., "1 cup", "2 tbsp")
+10. Do NOT invent or add content that doesn't exist in the source text
+11. If a section is clearly missing (e.g., ONLY ingredients listed with no instructions anywhere), do not make up content for the missing section
+12. Use natural, readable formatting without markdown symbols (#, ##, etc.)
 
-Example format:
-Chocolate Chip Cookies
-
+Example - if text has both ingredients and unlabeled instructions, format both:
+Input: "2 cups flour, 1 cup sugar. Mix together. Bake 350 degrees."
+Output:
 Ingredients:
 - 2 cups flour
 - 1 cup sugar
-- 2 eggs
 
 Directions:
-1. Preheat oven to 350°F.
-2. Mix dry ingredients together.
-3. Bake for 12 minutes.
+1. Mix together.
+2. Bake at 350 degrees.
 
 Text to correct:
 ${text}
@@ -80,23 +79,35 @@ ${text}
 Corrected and formatted recipe:`;
 
       case 'journal':
-        return `You are a text correction assistant specialized in personal journal entries. Your task is to fix OCR errors, spelling mistakes, and grammar issues while preserving the personal and authentic voice of the writer.
+        return `You are a text correction assistant specialized in handwritten personal journal entries. Your task is to fix OCR errors, spelling mistakes, and formatting issues while preserving the authentic voice and content of the writer.
 
 ${baseRules}
-7. Format dates at the beginning of entries naturally (e.g., "January 15, 2024" or "Monday, 1/15/24")
-8. Use blank lines to separate different entries or major thought transitions
-9. Preserve the personal, conversational tone and style
-10. Keep emotional expressions and personal reflections intact
-11. Maintain first-person perspective and informal language
-12. Do NOT make the writing overly formal or change the author's voice
-13. Use natural paragraph breaks (blank lines) for readability
+7. Fix common OCR issues:
+   - Remove random single letters or fragments (e.g., "L", "u", "ше", "JOURN")
+   - Reconnect words split across line breaks (e.g., "com\ning" → "coming")
+   - Fix obvious OCR mistakes (e.g., "namp" → "nap", "cuz" → "cuz" is OK in informal writing)
+8. Format dialogue naturally:
+   - Use quotation marks for spoken words
+   - Keep the conversational, informal tone intact
+9. Clean up formatting:
+   - Format dates naturally (e.g., "March 12, 2002" or "Tuesday, March 12, 2002")
+   - Use paragraph breaks for natural thought transitions
+   - Remove excessive or awkward line breaks within sentences
+10. Preserve the author's authentic voice:
+   - Keep informal language (e.g., "cuz", "gonna", "wanna")
+   - Maintain emotional expressions and exclamations
+   - Don't make it overly formal or change the personal style
+   - Keep first-person perspective
+11. Do NOT add content that isn't in the original text
+12. Do NOT remove meaningful content, only fix OCR errors
 
-Example format:
-January 15, 2024
+Example:
+Input: "march 12 2002\nToday was\ngood. I\nwent to the\npark and\nL\nsaid 'wow' it\nwas\namazing"
 
-Today was a good day. I woke up early and went for a walk in the park. The weather was perfect.
+Output:
+March 12, 2002
 
-I've been thinking a lot about my goals for this year. I want to focus on being more present and grateful for the little things.
+Today was good. I went to the park and said "wow" it was amazing.
 
 Text to correct:
 ${text}
