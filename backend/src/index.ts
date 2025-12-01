@@ -28,8 +28,10 @@ const PORT = parseInt(process.env.PORT || '3001', 10);
 // Middleware
 app.use(helmet()); // Security headers
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
+  origin: process.env.NODE_ENV === 'production'
     ? [
+        'https://pastforward.ing', // Custom domain
+        'https://www.pastforward.ing', // Custom domain with www
         'https://pastforward-testing.netlify.app', // Netlify deployment
         'https://pastforward.netlify.app', // Alternative Netlify URL
         /\.netlify\.app$/, // Any Netlify preview/branch deploys
