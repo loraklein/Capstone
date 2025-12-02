@@ -1,5 +1,6 @@
 // Text Enhancement Service - AI-powered text correction and improvement
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 
 export interface TextCorrection {
   original: string;
@@ -342,6 +343,135 @@ Corrected text:`;
   }
 }
 
+// OpenAI Provider
+export class OpenAITextEnhancementProvider implements TextEnhancementProvider {
+  name = 'openai';
+  private apiKey: string;
+  private model: string;
+  private client: OpenAI;
+
+  constructor(
+    apiKey?: string,
+    model: string = 'gpt-4o-mini'
+  ) {
+    this.apiKey = apiKey || process.env.OPENAI_API_KEY || '';
+    this.model = model;
+    this.client = new OpenAI({ apiKey: this.apiKey });
+
+    if (!this.apiKey) {
+      console.warn('⚠️  OpenAI API key not found for text enhancement');
+    }
+  }
+
+  private getPromptForProjectType(text: string, projectType: ProjectType = 'other'): string {
+    const baseRules = `Rules:
+1. Fix obvious OCR errors (e.g., "tbe" -> "the", "wben" -> "when")
+2. Correct spelling mistakes
+3. Fix basic grammar errors
+4. Preserve the original meaning and style
+5. Do NOT change dates, names, or numbers unless clearly wrong
+6. Return ONLY the corrected text, nothing else`;
+
+    switch (projectType) {
+      case 'recipes':
+        return `You are a text correction assistant specialized in recipe documents. Your task is to fix OCR errors, spelling mistakes, and grammar issues while intelligently organizing the content into a proper recipe format.
+
+${baseRules}
+7. Organize recipe text into clear sections: title, ingredients, instructions
+8. Preserve all measurements and ingredient quantities exactly
+
+Text to correct:
+${text}
+
+Corrected text:`;
+
+      case 'journal':
+        return `You are a text correction assistant specialized in journal and diary entries. Your task is to fix OCR errors, spelling mistakes, and grammar while preserving the personal writing style and emotional tone.
+
+${baseRules}
+7. Preserve personal writing style, tone, and voice
+8. Keep informal language and personal expressions
+
+Text to correct:
+${text}
+
+Corrected text:`;
+
+      case 'letters':
+        return `You are a text correction assistant specialized in letters and correspondence. Your task is to fix OCR errors, spelling mistakes, and grammar while maintaining the formal or informal tone appropriate to the letter.
+
+${baseRules}
+7. Preserve letter formatting (date, salutation, closing)
+8. Maintain the appropriate level of formality
+
+Text to correct:
+${text}
+
+Corrected text:`;
+
+      default:
+        return `You are a text correction assistant. Your task is to fix OCR errors, spelling mistakes, and grammar issues.
+
+${baseRules}
+7. Do NOT add or remove content
+8. Preserve the original document structure
+
+Text to correct:
+${text}
+
+Corrected text:`;
+    }
+  }
+
+  async correctText(text: string, projectType: ProjectType = 'other'): Promise<TextCorrection> {
+    if (!this.apiKey) {
+      throw new Error('OpenAI API key not configured');
+    }
+
+    if (!text || text.trim().length === 0) {
+      return {
+        original: text,
+        corrected: text,
+        changes: [],
+      };
+    }
+
+    try {
+      const prompt = this.getPromptForProjectType(text, projectType);
+
+      const completion = await this.client.chat.completions.create({
+        model: this.model,
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a helpful text correction assistant. Return only the corrected text without any explanation.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 2048,
+      });
+
+      let correctedText = completion.choices[0]?.message?.content?.trim() || text;
+
+      // Remove any markdown formatting if present
+      correctedText = correctedText.replace(/```[\s\S]*?```/g, '').trim();
+
+      return {
+        original: text,
+        corrected: correctedText,
+        changes: [], // TODO: Implement change tracking
+      };
+    } catch (error) {
+      console.error('OpenAI text correction error:', error);
+      throw new Error(`Failed to correct text with OpenAI: ${error}`);
+    }
+  }
+}
+
 // Text Enhancement Service Manager
 export class TextEnhancementService {
   private providers: Map<string, TextEnhancementProvider> = new Map();
@@ -351,9 +481,10 @@ export class TextEnhancementService {
     // Register providers
     this.providers.set('ollama', new OllamaTextEnhancementProvider());
     this.providers.set('gemini', new GeminiTextEnhancementProvider());
+    this.providers.set('openai', new OpenAITextEnhancementProvider());
 
-    // Use Gemini in production (deployed), Ollama in development (local)
-    const defaultProvider = process.env.NODE_ENV === 'production' ? 'gemini' : 'ollama';
+    // Use OpenAI in production (deployed), Ollama in development (local)
+    const defaultProvider = process.env.NODE_ENV === 'production' ? 'openai' : 'ollama';
     this.defaultProvider = process.env.TEXT_ENHANCEMENT_PROVIDER || defaultProvider;
 
     console.log(`✅ Text Enhancement Service initialized with provider: ${this.defaultProvider}`);
