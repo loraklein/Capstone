@@ -1,4 +1,5 @@
 // Text Enhancement Service - AI-powered text correction and improvement
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface TextCorrection {
   original: string;
@@ -214,11 +215,12 @@ Corrected text:`;
   }
 }
 
-// Gemini Provider (placeholder for future)
+// Gemini Provider
 export class GeminiTextEnhancementProvider implements TextEnhancementProvider {
   name = 'gemini';
   private apiKey: string;
   private model: string;
+  private genAI: GoogleGenerativeAI;
 
   constructor(
     apiKey?: string,
@@ -226,9 +228,70 @@ export class GeminiTextEnhancementProvider implements TextEnhancementProvider {
   ) {
     this.apiKey = apiKey || process.env.GOOGLE_AI_API_KEY || '';
     this.model = model;
+    this.genAI = new GoogleGenerativeAI(this.apiKey);
 
     if (!this.apiKey) {
       console.warn('⚠️  Google AI API key not found for Gemini text enhancement');
+    }
+  }
+
+  private getPromptForProjectType(text: string, projectType: ProjectType = 'other'): string {
+    const baseRules = `Rules:
+1. Fix obvious OCR errors (e.g., "tbe" -> "the", "wben" -> "when")
+2. Correct spelling mistakes
+3. Fix basic grammar errors
+4. Preserve the original meaning and style
+5. Do NOT change dates, names, or numbers unless clearly wrong
+6. Return ONLY the corrected text, nothing else`;
+
+    switch (projectType) {
+      case 'recipes':
+        return `You are a text correction assistant specialized in recipe documents. Your task is to fix OCR errors, spelling mistakes, and grammar issues while intelligently organizing the content into a proper recipe format.
+
+${baseRules}
+7. Organize recipe text into clear sections: title, ingredients, instructions
+8. Preserve all measurements and ingredient quantities exactly
+
+Text to correct:
+${text}
+
+Corrected text:`;
+
+      case 'journal':
+        return `You are a text correction assistant specialized in journal and diary entries. Your task is to fix OCR errors, spelling mistakes, and grammar while preserving the personal writing style and emotional tone.
+
+${baseRules}
+7. Preserve personal writing style, tone, and voice
+8. Keep informal language and personal expressions
+
+Text to correct:
+${text}
+
+Corrected text:`;
+
+      case 'letters':
+        return `You are a text correction assistant specialized in letters and correspondence. Your task is to fix OCR errors, spelling mistakes, and grammar while maintaining the formal or informal tone appropriate to the letter.
+
+${baseRules}
+7. Preserve letter formatting (date, salutation, closing)
+8. Maintain the appropriate level of formality
+
+Text to correct:
+${text}
+
+Corrected text:`;
+
+      default:
+        return `You are a text correction assistant. Your task is to fix OCR errors, spelling mistakes, and grammar issues.
+
+${baseRules}
+7. Do NOT add or remove content
+8. Preserve the original document structure
+
+Text to correct:
+${text}
+
+Corrected text:`;
     }
   }
 
@@ -237,9 +300,45 @@ export class GeminiTextEnhancementProvider implements TextEnhancementProvider {
       throw new Error('Gemini API key not configured');
     }
 
-    // TODO: Implement Gemini text correction with project type support
-    // This will be similar to Ollama but using Gemini API
-    throw new Error('Gemini text correction not yet implemented');
+    if (!text || text.trim().length === 0) {
+      return {
+        original: text,
+        corrected: text,
+        changes: [],
+      };
+    }
+
+    try {
+      const model = this.genAI.getGenerativeModel({ model: this.model });
+      const prompt = this.getPromptForProjectType(text, projectType);
+
+      const result = await model.generateContent({
+        contents: [{ role: 'user', parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature: 0.3,
+          topP: 0.9,
+          maxOutputTokens: 2048,
+        },
+      });
+
+      const response = result.response;
+      let correctedText = response.text().trim() || text;
+
+      // Remove <think>...</think> tags if present
+      while (correctedText.includes('<think>')) {
+        correctedText = correctedText.replace(/<think>[\s\S]*?<\/think>/i, '');
+      }
+      correctedText = correctedText.trim();
+
+      return {
+        original: text,
+        corrected: correctedText,
+        changes: [], // TODO: Implement change tracking
+      };
+    } catch (error) {
+      console.error('Gemini text correction error:', error);
+      throw new Error(`Failed to correct text with Gemini: ${error}`);
+    }
   }
 }
 
@@ -253,8 +352,9 @@ export class TextEnhancementService {
     this.providers.set('ollama', new OllamaTextEnhancementProvider());
     this.providers.set('gemini', new GeminiTextEnhancementProvider());
 
-    // Default to Ollama for development, can switch via env var
-    this.defaultProvider = process.env.TEXT_ENHANCEMENT_PROVIDER || 'ollama';
+    // Use Gemini in production (deployed), Ollama in development (local)
+    const defaultProvider = process.env.NODE_ENV === 'production' ? 'gemini' : 'ollama';
+    this.defaultProvider = process.env.TEXT_ENHANCEMENT_PROVIDER || defaultProvider;
 
     console.log(`✅ Text Enhancement Service initialized with provider: ${this.defaultProvider}`);
   }
