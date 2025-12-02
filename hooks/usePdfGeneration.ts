@@ -66,6 +66,10 @@ export default function usePdfGeneration(projectId: string): UsePdfGenerationRet
       }
       if (options?.bookSettings) {
         queryParams.append('bookSettings', JSON.stringify(options.bookSettings));
+        // Extract includeImages from bookSettings and add as separate query param
+        if (options.bookSettings.includeImages !== undefined) {
+          queryParams.append('includeImages', String(options.bookSettings.includeImages));
+        }
       }
 
       const downloadUrl = `${baseUrl}/projects/${projectId}/export/book/pdf${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;

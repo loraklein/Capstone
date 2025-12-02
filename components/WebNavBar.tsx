@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform, Dimensions, useWindowDimensions } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -12,6 +12,10 @@ export default function WebNavBar() {
   const router = useRouter();
   const pathname = usePathname();
   const { signOut, user } = useAuth();
+  const { width } = useWindowDimensions();
+
+  // Check if screen is mobile-sized (768px or less)
+  const isMobile = width <= 768;
 
   // Only show on web and when user is authenticated
   if (!IS_WEB) {
@@ -32,25 +36,27 @@ export default function WebNavBar() {
 
   return (
     <View style={[styles.navbar, { backgroundColor: theme.surface, borderBottomColor: theme.divider }]}>
-      <View style={styles.container}>
+      <View style={[styles.container, isMobile && styles.containerMobile]}>
         {/* Brand Name */}
         <Pressable style={styles.brand} onPress={() => router.push('/(tabs)')}>
           <Text style={[styles.brandText, { color: theme.primary }]}>PastForward</Text>
         </Pressable>
 
-        {/* Navigation Links */}
+        {/* Navigation Links - Show icons only on small web screens */}
         <View style={styles.navLinks}>
           <Pressable
             style={[styles.navLink, isProjectsPage && styles.navLinkActive]}
             onPress={() => router.push('/(tabs)')}
           >
             <Icon name="folder" size={20} color={isProjectsPage ? theme.primary : theme.textSecondary} />
-            <Text style={[
-              styles.navLinkText,
-              { color: isProjectsPage ? theme.primary : theme.textSecondary }
-            ]}>
-              Projects
-            </Text>
+            {!isMobile && (
+              <Text style={[
+                styles.navLinkText,
+                { color: isProjectsPage ? theme.primary : theme.textSecondary }
+              ]}>
+                Projects
+              </Text>
+            )}
           </Pressable>
 
           <Pressable
@@ -58,12 +64,14 @@ export default function WebNavBar() {
             onPress={() => router.push('/(tabs)/recent')}
           >
             <Icon name="history" size={20} color={isRecentPage ? theme.primary : theme.textSecondary} />
-            <Text style={[
-              styles.navLinkText,
-              { color: isRecentPage ? theme.primary : theme.textSecondary }
-            ]}>
-              Recent
-            </Text>
+            {!isMobile && (
+              <Text style={[
+                styles.navLinkText,
+                { color: isRecentPage ? theme.primary : theme.textSecondary }
+              ]}>
+                Recent
+              </Text>
+            )}
           </Pressable>
 
           <Pressable
@@ -71,12 +79,14 @@ export default function WebNavBar() {
             onPress={() => router.push('/(tabs)/settings')}
           >
             <Icon name="settings" size={20} color={isSettingsPage ? theme.primary : theme.textSecondary} />
-            <Text style={[
-              styles.navLinkText,
-              { color: isSettingsPage ? theme.primary : theme.textSecondary }
-            ]}>
-              Settings
-            </Text>
+            {!isMobile && (
+              <Text style={[
+                styles.navLinkText,
+                { color: isSettingsPage ? theme.primary : theme.textSecondary }
+              ]}>
+                Settings
+              </Text>
+            )}
           </Pressable>
         </View>
 
@@ -91,9 +101,11 @@ export default function WebNavBar() {
               onPress={signOut}
             >
               <Icon name="logout" size={18} color={theme.text} />
-              <Text style={[styles.signOutText, { color: theme.text }]}>
-                Sign Out
-              </Text>
+              {!isMobile && (
+                <Text style={[styles.signOutText, { color: theme.text }]}>
+                  Sign Out
+                </Text>
+              )}
             </Pressable>
           )}
         </View>
@@ -116,6 +128,9 @@ const styles = StyleSheet.create({
     maxWidth: 1400,
     width: '100%',
     alignSelf: 'center',
+  },
+  containerMobile: {
+    paddingHorizontal: 16,
   },
   brand: {
     flexDirection: 'row',

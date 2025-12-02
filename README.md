@@ -1,99 +1,154 @@
-# Document Scanner App
-A React Native mobile application built with Expo that allows users to create projects and capture pages of handwritten documents for digitization.
+# PastForward
 
-## Human Interface Guidelines Implementation
+A cross-platform application for digitizing handwritten documents using AI-powered OCR and text enhancement. Capture photos of handwritten pages, extract text automatically, and create professionally formatted PDFs ready for print-on-demand services.
 
-### Typography & Visual Elements
-- **AddPageButton**: Uses 16pt vertical padding and 17pt fontSize for primary button text, following HIG button standards
-- **ProjectCard**: Project names use 17pt fontSize with 400 weight, descriptions use 15pt, and page counts use 13pt, creating proper visual hierarchy
-- **ProjectHeader**: Project titles use 24pt bold headers, descriptions use 16pt body text with 22pt line height
-- **ConfirmationDialog**: Title uses 20pt fontWeight 600, message uses 16pt with 22pt line height, button text uses 16pt
-
-### Modal Presentations & Navigation
-- **Add/Edit Project Screens**: Use `presentation: 'modal'` in Stack.Screen options for proper iOS modal presentation
-- **PhotoViewer**: Implements pinch-to-zoom (0.5x to 4x) and double-tap to toggle between 1x and 2x zoom levels, following iOS photo viewing conventions
-- **ConfirmationDialog**: Matches iOS alert style with centered text, side-by-side buttons, and proper border styling with theme.divider
-
-### System Integration & Theming
-- **ThemeContext**: Automatically adapts to device's light/dark mode preferences using `useColorScheme()`, with manual toggle in Settings
-- **Color Semantics**: Uses semantic color tokens - `theme.primary` (#5F6B52 light, #7A8B6B dark) for primary actions, `theme.error` (#C14A4A light, #D15A5A dark) for destructive actions, `theme.textSecondary` for secondary text
-- **StatusBar**: Dynamically adjusts status bar style based on theme mode and system preference
-- **TabBar**: Uses `tabBarActiveTintColor: theme.primary` and `tabBarInactiveTintColor: theme.textSecondary` for proper contrast
+**Live Demo:** [https://pastforward.ing](https://pastforward.ing)
 
 ## Features
 
-- **Project Management**: Create and organize document scanning projects
-- **Tab Navigation**: Easy navigation between Projects, Recent, and Settings
-- **Real Camera Capture**: High-quality document capture with framing guides and camera controls
-- **Advanced Photo Viewing**: Pinch-to-zoom, double-tap zoom, and pan functionality
-- **Theme Support**: Light and dark mode with proper contrast and accessibility
-- **Orientation Control**: Locks screen to portrait mode during camera capture
-- **Persistent Storage**: Projects and pages are saved locally using AsyncStorage
-- **Haptic Feedback**: Tactile responses for important interactions
-- **Professional UI**: Clean, modern interface following iOS Human Interface Guidelines
+### Document Digitization
+- **Photo Capture**: High-quality document capture with camera or photo library upload
+- **OCR Text Extraction**: Automatic text recognition from handwritten documents using Google Vision API
+- **AI Text Enhancement**: Intelligent correction of OCR errors, spelling, and grammar with project-type awareness (recipes, journals, letters)
+- **Line-by-Line Editing**: Manual text editing with side-by-side original image reference
 
-## NEW FEATURES
+### Organization & Management
+- **Project Types**: Specialized handling for recipes, journals, letters, and general documents
+- **Chapter Organization**: Group pages into chapters/sections with custom titles
+- **Page Reordering**: Drag-and-drop interface for organizing pages
+- **Image Rotation**: Correct page orientation for better readability
 
-- **Image Rotation**: Rotate captured images to correct orientation for better document readability.
-- **Swipe Actions**: Swipe left on projects to edit or delete them with intuitive gesture controls
-- **Improved UI and User Flow**: Enhanced visual design and streamlined user experience throughout the app
-- **Drag & Drop Page Reordering**: Long-press and drag pages to reorder them within projects for better document organization
-- **Code Architecture**: Refactored with custom hooks for better performance and maintainability.
-- **OCR Text Extraction**: Google Vision API integration for automatic text recognition from handwritten documents
-- **PDF Export**: Export complete projects as formatted PDF books with extracted text
-- **Authentication**: Secure user authentication with Supabase Auth and JWT tokens
-- **Cloud Storage**: Images stored securely in Supabase Storage with user isolation
-- **Line-by-Line Text Editing**: Edit extracted text line by line for accuracy
+### Export & Publishing
+- **Quick PDF Export**: Generate PDFs from extracted text
+- **Create Printable Book**: Professional book formatting with:
+  - Multiple book sizes (6x9, 8x11, 5.5x8.5)
+  - Customizable fonts and typography
+  - Front and back cover generation
+  - Table of contents
+  - Optional source image inclusion
+- **Preview Before Export**: View formatted output before generating PDF
 
-## Expo Packages Used
+### User Experience
+- **Web & Mobile**: Responsive web app and native iOS/Android support via Expo
+- **Light/Dark Mode**: Automatic theme adaptation based on system preferences
+- **Offline Capable**: Works with local AI models (Ollama) in development
+- **Secure Authentication**: User accounts with Supabase Auth
 
-### Core Navigation & UI
-- **expo-router** - File-based navigation system
-- **@expo/vector-icons** - Icon library for UI elements
-- **react-native-screens** - Native screen components for better performance
+## Technology Stack
 
-### Camera & Media
-- **expo-camera** - Real camera functionality for document capture
-- **expo-file-system** - File system access for photo storage
-- **expo-image** - Optimized image component for better performance
+### Frontend
+- **React Native** with **Expo** for cross-platform mobile and web deployment
+- **Expo Router** for file-based navigation
+- **TypeScript** for type safety
+- **React Context** for state management
 
-### User Input & Interaction
-- **expo-checkbox** - Checkbox component for settings
-- **expo-haptics** - Tactile feedback for button interactions
-- **react-native-gesture-handler** - Advanced gesture recognition for swipe actions
-- **react-native-reanimated** - Hardware-accelerated animations
+### Backend
+- **Node.js** with **Express** API server
+- **PostgreSQL** database via Supabase
+- **Supabase Storage** for image hosting
+- **Puppeteer** for PDF generation
 
-### Device Features
-- **expo-screen-orientation** - Control screen rotation during scanning
-- **expo-status-bar** - Status bar management
+### AI & OCR
+- **Google Cloud Vision API** for OCR text extraction
+- **OpenAI GPT-4o-mini** for text enhancement (production)
+- **Ollama** for local AI models (development)
+- Support for multiple providers: OpenAI, Google Gemini, Ollama
 
-### Data Storage & Export
-- **@react-native-async-storage/async-storage** - Local data persistence
-- **expo-print** - PDF generation and printing capabilities
-- **expo-sharing** - Share documents and files
-- **react-native-html-to-pdf** - Convert content to PDF format
+## Deployment
 
-### UI & Theming
-- **expo-blur** - Blur effects for modern UI design
-- **expo-splash-screen** - Custom splash screen
-- **react-native-safe-area-context** - Safe area handling for different devices
+- **Frontend**: Netlify ([pastforward.ing](https://pastforward.ing))
+- **Backend**: Render ([capstone-backend-og2c.onrender.com](https://capstone-backend-og2c.onrender.com))
+- **Database & Storage**: Supabase
 
-## Wire Frames
-![Wireframe 1](wireframes/wireframes1.jpg)
-![Wireframe 2](wireframes/wireframes2.png)
-![Wireframe 3](wireframes/wireframes3.jpg)
+## Getting Started
 
+### Prerequisites
+- Node.js 20.x
+- PostgreSQL (via Supabase)
+- Google Cloud Vision API key
+- OpenAI API key (for production) or Ollama (for local development)
 
-## Future Enhancements
-- Project sharing capabilities
-- Multi-language OCR support
-- Advanced text editing features
-- Batch export options
+### Installation
 
-## Development Notes
+```bash
+# Clone repository
+git clone https://github.com/yourusername/pastforward.git
+cd pastforward
 
-- Tested on Android emulator and iPhone 13
-- Camera integration requires user permission for access
-- Theme supports light and dark modes based on the user's device preference
-- Data persists between app sessions via AsyncStorage (the Settings page includes
-an option to "Clear All Data" which will clear the storage)
+# Install frontend dependencies
+npm install
+
+# Install backend dependencies
+cd backend
+npm install
+```
+
+### Environment Setup
+
+**Frontend** - Create `.env` in root:
+```
+EXPO_PUBLIC_API_URL=http://localhost:3001/api
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_url
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+**Backend** - Create `backend/.env`:
+```
+# Database
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+DATABASE_URL=your_postgres_connection_string
+
+# AI Services
+GOOGLE_CLOUD_API_KEY=your_google_vision_key
+OPENAI_API_KEY=your_openai_key
+TEXT_ENHANCEMENT_PROVIDER=openai
+
+# Server
+PORT=3001
+NODE_ENV=development
+```
+
+### Run Development Servers
+
+```bash
+# Frontend (web)
+npm run web
+
+# Frontend (iOS simulator)
+npm run ios
+
+# Frontend (Android emulator)
+npm run android
+
+# Backend
+cd backend
+npm run dev
+```
+
+## Architecture Highlights
+
+- **Modular Service Layer**: Separate services for OCR, text enhancement, PDF generation, and storage
+- **Provider Pattern**: Pluggable AI providers (OpenAI, Gemini, Ollama) with environment-based selection
+- **Custom Hooks**: React hooks for camera, photo viewing, PDF generation, and project management
+- **Type Safety**: Full TypeScript coverage across frontend and backend
+- **Responsive Design**: Single codebase for web, iOS, and Android with platform-specific optimizations
+
+## Key Dependencies
+
+**Frontend:**
+- `expo` - Cross-platform framework
+- `expo-router` - File-based navigation
+- `expo-camera` - Camera functionality
+- `react-native-gesture-handler` - Drag-and-drop reordering
+
+**Backend:**
+- `express` - Web framework
+- `@supabase/supabase-js` - Database and auth
+- `@google-cloud/vision` - OCR
+- `openai` - Text enhancement
+- `puppeteer` - PDF generation
+
+## License
+
+This project was created as part of an Advanced Web Development capstone.

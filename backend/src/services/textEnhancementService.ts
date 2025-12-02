@@ -444,7 +444,7 @@ Corrected text:`;
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful text correction assistant. Return only the corrected text without any explanation.'
+            content: 'You are a helpful text correction assistant. Return only the corrected text without any explanation. Do NOT use markdown formatting (no **, *, #, etc). Return plain text only.'
           },
           {
             role: 'user',
@@ -458,7 +458,12 @@ Corrected text:`;
       let correctedText = completion.choices[0]?.message?.content?.trim() || text;
 
       // Remove any markdown formatting if present
-      correctedText = correctedText.replace(/```[\s\S]*?```/g, '').trim();
+      correctedText = correctedText
+        .replace(/```[\s\S]*?```/g, '') // Remove code blocks
+        .replace(/\*\*(.+?)\*\*/g, '$1') // Remove bold **text**
+        .replace(/\*(.+?)\*/g, '$1')     // Remove italic *text*
+        .replace(/^#+\s+/gm, '')         // Remove headers
+        .trim();
 
       return {
         original: text,
