@@ -190,7 +190,7 @@ Corrected text:`;
         throw new Error(`Ollama API error: ${response.statusText}`);
       }
 
-      const result = await response.json();
+      const result = await response.json() as { response?: string };
       let correctedText = result.response?.trim() || text;
 
       // Remove <think>...</think> tags from reasoning models like DeepSeek-R1
