@@ -277,7 +277,7 @@ export const exportProjectBookHtml = async (req: Request, res: Response) => {
       : undefined;
 
     const payload = await buildBookExport(id, userId);
-    const html = renderBookHtml(payload, { includeImages, bookSettings });
+    const html = renderBookHtml(payload, { includeImages, bookSettings, isPreview: true });
 
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
     res.send(html);

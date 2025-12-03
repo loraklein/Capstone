@@ -28,7 +28,7 @@ export interface BookSettings {
   title: string;
   subtitle: string;
   author: string;
-  fontFamily: 'serif' | 'sans-serif';
+  fontFamily: 'georgia' | 'garamond' | 'palatino' | 'baskerville' | 'helvetica' | 'verdana' | 'courier';
   fontSize: number;
   includeBackCover: boolean;
   coverTemplate: 'simple' | 'elegant' | 'modern';
@@ -60,7 +60,7 @@ export default function BookExportSettingsModal({
     title: projectName,
     subtitle: projectDescription,
     author: '',
-    fontFamily: 'serif',
+    fontFamily: 'georgia',
     fontSize: 11,
     includeBackCover: false,
     coverTemplate: 'simple',
@@ -180,8 +180,8 @@ export default function BookExportSettingsModal({
             {/* Font Settings */}
             <View style={styles.section}>
               <Text style={[styles.sectionLabel, { color: theme.text }]}>Font Family</Text>
-              <View style={styles.fontRow}>
-                {(['serif', 'sans-serif'] as const).map((font) => (
+              <View style={styles.fontGrid}>
+                {(['georgia', 'garamond', 'palatino', 'baskerville', 'helvetica', 'verdana', 'courier'] as const).map((font) => (
                   <Pressable
                     key={font}
                     style={[
@@ -198,11 +198,10 @@ export default function BookExportSettingsModal({
                         styles.fontButtonText,
                         {
                           color: settings.fontFamily === font ? theme.primaryText : theme.text,
-                          fontFamily: font,
                         },
                       ]}
                     >
-                      {font === 'serif' ? 'Serif' : 'Sans Serif'}
+                      {font.charAt(0).toUpperCase() + font.slice(1)}
                     </Text>
                   </Pressable>
                 ))}
@@ -507,13 +506,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
   },
+  fontGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   fontButton: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
     borderWidth: 1,
     alignItems: 'center',
+    minWidth: '30%',
+    flexGrow: 1,
   },
   sizeButton: {
     flex: 1,

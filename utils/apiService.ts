@@ -101,7 +101,7 @@ export class ApiService {
     return this.makeRequest(`/projects/${projectId}`);
   }
 
-  async updateProject(projectId: string, updates: { title?: string; description?: string; project_type?: string }): Promise<any> {
+  async updateProject(projectId: string, updates: { name?: string; description?: string; project_type?: string }): Promise<any> {
     return this.makeRequest(`/projects/${projectId}`, {
       method: 'PUT',
       body: JSON.stringify(updates),

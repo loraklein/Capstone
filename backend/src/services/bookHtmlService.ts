@@ -5,6 +5,7 @@ interface RenderOptions {
   includeImages?: boolean;
   customPdfSettings?: CustomPdfSettings;
   bookSettings?: BookSettings;
+  isPreview?: boolean;
 }
 
 const escapeHtml = (value: string): string =>
@@ -16,9 +17,24 @@ const escapeHtml = (value: string): string =>
     .replace(/'/g, '&#39;');
 
 const getFontFamily = (font?: string): string => {
-  if (font === 'sans-serif') return '"Helvetica Neue", "Arial", sans-serif';
-  if (font === 'monospace') return '"Courier New", "Courier", monospace';
-  return '"Georgia", "Times New Roman", serif'; // Default to serif
+  switch (font) {
+    case 'georgia':
+      return '"Georgia", "Times New Roman", serif';
+    case 'garamond':
+      return '"Garamond", "EB Garamond", "Times New Roman", serif';
+    case 'palatino':
+      return '"Palatino Linotype", "Palatino", "Book Antiqua", serif';
+    case 'baskerville':
+      return '"Baskerville", "Libre Baskerville", "Times New Roman", serif';
+    case 'helvetica':
+      return '"Helvetica Neue", "Helvetica", "Arial", sans-serif';
+    case 'verdana':
+      return '"Verdana", "Geneva", sans-serif';
+    case 'courier':
+      return '"Courier New", "Courier", monospace';
+    default:
+      return '"Georgia", "Times New Roman", serif'; // Default
+  }
 };
 
 const generateDynamicStyles = (options: RenderOptions): string => {
@@ -39,15 +55,30 @@ const generateDynamicStyles = (options: RenderOptions): string => {
         color: #5a4c43;
       }
     }
-    /* Skip page numbers on title page and don't count it */
-    @page :first {
+    /* Hide page numbers on title page */
+    @page title-page {
       @bottom-center {
         content: none;
       }
     }
-    /* Reset page counter so content starts at page 1 */
+    /* Hide page numbers on TOC */
+    @page toc-page {
+      @bottom-center {
+        content: none;
+      }
+    }
+    /* Apply named page to title page */
+    .title-page {
+      page: title-page;
+    }
+    /* Apply named page to TOC */
+    .table-of-contents {
+      page: toc-page;
+    }
+    /* Reset page counter to 0, so first content page is 1 */
     .book-content {
-      counter-reset: page 1;
+      counter-reset: page 0;
+      page: auto;
     }
   ` : '';
 
@@ -103,6 +134,7 @@ const renderTitlePage = (frontMatter: BookFrontMatter, bookSettings?: BookSettin
   const title = bookSettings?.title || titlePage.title;
   const subtitle = bookSettings?.subtitle || titlePage.subtitle || '';
   const author = bookSettings?.author || titlePage.author || '';
+  const template = bookSettings?.coverTemplate || 'simple';
 
   const subtitleHtml = subtitle ? `<p class="subtitle">${escapeHtml(subtitle)}</p>` : '';
   const authorHtml = author ? `<p class="author">By ${escapeHtml(author)}</p>` : '';
@@ -110,12 +142,28 @@ const renderTitlePage = (frontMatter: BookFrontMatter, bookSettings?: BookSettin
     ? `<div class="description"><p>${escapeHtml(description)}</p></div>`
     : '';
 
+  // Template-specific decorations
+  let decorations = '';
+  if (template === 'elegant') {
+    decorations = `
+      <div class="elegant-ornament-top">✦</div>
+      <div class="elegant-divider"></div>
+      <div class="elegant-ornament-bottom">✦</div>
+    `;
+  } else if (template === 'modern') {
+    decorations = `<div class="modern-accent"></div>`;
+  }
+
   return `
-    <section class="title-page page-break">
+    <section class="title-page page-break cover-${template}">
       <div class="title-wrapper">
+        ${template === 'elegant' ? '<div class="elegant-ornament-top">✦</div>' : ''}
         <h1>${escapeHtml(title)}</h1>
+        ${template === 'elegant' ? '<div class="elegant-divider"></div>' : ''}
         ${subtitleHtml}
         ${authorHtml}
+        ${template === 'elegant' ? '<div class="elegant-ornament-bottom">✦</div>' : ''}
+        ${template === 'modern' ? '<div class="modern-accent"></div>' : ''}
       </div>
       ${descriptionBlock}
     </section>
@@ -239,9 +287,16 @@ const renderPage = (page: BookExportPage, options: RenderOptions, isLastPage: bo
     : '';
 
   // Determine if we should add a page break after this page
-  const pageBreakStyle = options.bookSettings?.pageBreakStyle || 'sections-only';
+  // Only apply page breaks if bookSettings are provided (Create Printable Book)
+  // Quick Export should be continuous with no page breaks
+  const pageBreakStyle = options.bookSettings?.pageBreakStyle || 'continuous';
   const shouldBreakAfterPage = pageBreakStyle === 'after-each-page' && !isLastPage;
   const pageBreakClass = shouldBreakAfterPage ? ' page-break-after' : '';
+
+  // Add visual page break indicator in preview mode
+  const visualPageBreak = options.isPreview && shouldBreakAfterPage
+    ? '<div class="visual-page-break"><span>Page Break</span></div>'
+    : '';
 
   // For continuous flow (book settings), just return the text
   // For regular PDFs, keep section structure
@@ -252,6 +307,7 @@ const renderPage = (page: BookExportPage, options: RenderOptions, isLastPage: bo
         ${text}
         ${image}
       </div>
+      ${visualPageBreak}
     `;
   } else {
     // Regular PDF: keep sections
@@ -264,6 +320,7 @@ const renderPage = (page: BookExportPage, options: RenderOptions, isLastPage: bo
           ${image}
         </div>
       </section>
+      ${visualPageBreak}
     `;
   }
 };
@@ -271,7 +328,9 @@ const renderPage = (page: BookExportPage, options: RenderOptions, isLastPage: bo
 export function renderBookHtml(payload: BookExportPayload, options: RenderOptions = {}): string {
   const includeImages = options.includeImages ?? false;
   const chapters = payload.chapters || [];
-  const pageBreakStyle = options.bookSettings?.pageBreakStyle || 'sections-only';
+  // Only apply page breaks if bookSettings are provided (Create Printable Book)
+  // Quick Export should be continuous with no page breaks
+  const pageBreakStyle = options.bookSettings?.pageBreakStyle || 'continuous';
 
   // Render pages with chapter headings
   const pagesHtml = payload.pages.map((page, index) => {
@@ -285,6 +344,13 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
       // Add page break before chapter if pageBreakStyle is 'sections-only'
       const shouldBreakBeforeChapter = pageBreakStyle === 'sections-only';
       const pageBreakClass = shouldBreakBeforeChapter ? ' chapter-break' : '';
+
+      // Add visual page break indicator before chapter in preview mode
+      const visualChapterBreak = options.isPreview && shouldBreakBeforeChapter && index > 0
+        ? '<div class="visual-page-break"><span>Page Break (New Section)</span></div>'
+        : '';
+
+      html += visualChapterBreak;
       html += `
         <div class="chapter-heading${pageBreakClass}">
           <h2>${escapeHtml(chapter.title)}</h2>
@@ -385,6 +451,95 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
           .title-page .description {
             margin-top: 2rem;
             max-width: 40rem;
+          }
+
+          /* Simple Template (Default) - Clean, minimal */
+          .cover-simple h1 {
+            font-family: "Georgia", "Times New Roman", serif;
+            font-weight: 600;
+          }
+
+          /* Elegant Template - Decorative flourishes */
+          .cover-elegant {
+            background: linear-gradient(to bottom, #fafaf8 0%, #ffffff 100%);
+          }
+          .cover-elegant h1 {
+            font-family: "Garamond", "EB Garamond", "Baskerville", serif;
+            font-weight: 400;
+            font-size: 3rem;
+            letter-spacing: 0.08em;
+            text-transform: none;
+            margin-bottom: 1rem;
+          }
+          .cover-elegant .subtitle {
+            font-family: "Garamond", "EB Garamond", serif;
+            font-style: italic;
+            font-size: 1.6rem;
+            color: #5a4c43;
+            margin-bottom: 2rem;
+          }
+          .cover-elegant .author {
+            font-size: 1.2rem;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            font-weight: 300;
+          }
+          .elegant-ornament-top,
+          .elegant-ornament-bottom {
+            font-size: 1.8rem;
+            color: #8b7355;
+            margin: 1.5rem 0;
+          }
+          .elegant-divider {
+            width: 8rem;
+            height: 2px;
+            background: linear-gradient(to right, transparent, #8b7355, transparent);
+            margin: 1rem auto;
+          }
+
+          /* Modern Template - Bold, asymmetric */
+          .cover-modern {
+            text-align: left;
+            align-items: flex-start;
+            justify-content: flex-start;
+            padding: 6rem 4rem;
+            position: relative;
+          }
+          .cover-modern .title-wrapper {
+            align-items: flex-start;
+            text-align: left;
+          }
+          .cover-modern h1 {
+            font-family: "Helvetica Neue", "Helvetica", "Arial", sans-serif;
+            font-weight: 700;
+            font-size: 3.5rem;
+            letter-spacing: -0.02em;
+            text-transform: none;
+            line-height: 1.1;
+            margin-bottom: 1rem;
+            padding: 0;
+            max-width: 80%;
+          }
+          .cover-modern .subtitle {
+            font-family: "Helvetica Neue", "Helvetica", sans-serif;
+            font-size: 1.3rem;
+            font-style: normal;
+            font-weight: 300;
+            margin-bottom: 3rem;
+            max-width: 70%;
+          }
+          .cover-modern .author {
+            font-size: 1.1rem;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 500;
+          }
+          .modern-accent {
+            width: 6rem;
+            height: 6px;
+            background: #1a1410;
+            margin-top: 2rem;
+            margin-bottom: 0;
           }
           /* Continuous flow container for book/custom PDF */
           .book-content {
@@ -565,12 +720,37 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
             line-height: 1.6;
             padding-left: 0.5rem;
           }
+          /* Visual page break indicator for preview mode */
+          .visual-page-break {
+            margin: 2rem 0;
+            padding: 1rem 0;
+            text-align: center;
+            border-top: 2px dashed #8b7355;
+            border-bottom: 2px dashed #8b7355;
+            background: linear-gradient(to bottom, rgba(139, 115, 85, 0.05), rgba(139, 115, 85, 0.1), rgba(139, 115, 85, 0.05));
+          }
+          .visual-page-break span {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            background: #fdfcf9;
+            color: #8b7355;
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+            border: 1px solid #8b7355;
+            border-radius: 4px;
+          }
           @media print {
             body {
               background: white;
             }
             .content-page:nth-child(odd) {
               background: transparent;
+            }
+            /* Hide visual page breaks in print/PDF */
+            .visual-page-break {
+              display: none;
             }
           }
           /* Dynamic styles based on user settings */

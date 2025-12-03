@@ -132,8 +132,8 @@ export default function ExportOptionsModal({
             <Icon name="chevron-right" size={24} color={theme.textTertiary} />
           </Pressable>
 
-          {/* Create Printable Book Option */}
-          {onPrintBook && (
+          {/* Create Printable Book Option - Web Only */}
+          {IS_WEB && onPrintBook && (
             <Pressable
               style={[styles.option, { backgroundColor: theme.background, borderColor: theme.border }]}
               onPress={() => {

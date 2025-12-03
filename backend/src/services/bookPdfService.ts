@@ -6,7 +6,7 @@ import { BookExportPayload } from './bookExportService';
 import { renderBookHtml } from './bookHtmlService';
 
 export interface CustomPdfSettings {
-  fontFamily?: 'serif' | 'sans-serif' | 'monospace';
+  fontFamily?: 'georgia' | 'garamond' | 'palatino' | 'baskerville' | 'helvetica' | 'verdana' | 'courier';
   fontSize?: number;
   lineSpacing?: number;
   pageSize?: 'letter' | 'a4';
@@ -17,7 +17,7 @@ export interface BookSettings {
   title?: string;
   subtitle?: string;
   author?: string;
-  fontFamily?: 'serif' | 'sans-serif';
+  fontFamily?: 'georgia' | 'garamond' | 'palatino' | 'baskerville' | 'helvetica' | 'verdana' | 'courier';
   fontSize?: number;
   includeBackCover?: boolean;
   coverTemplate?: 'simple' | 'elegant' | 'modern';

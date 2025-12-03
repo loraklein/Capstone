@@ -123,7 +123,7 @@ class ProjectService {
     try {
       // Update project in backend
       const backendProject = await apiService.updateProject(projectId, {
-        title: data.name?.trim(),
+        name: data.name?.trim(),
         description: data.description?.trim(),
         project_type: data.projectType,
       });

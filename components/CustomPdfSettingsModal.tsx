@@ -18,14 +18,14 @@ interface CustomPdfSettingsModalProps {
 }
 
 export interface PdfSettings {
-  fontFamily: 'serif' | 'sans-serif' | 'monospace';
+  fontFamily: 'georgia' | 'garamond' | 'palatino' | 'baskerville' | 'helvetica' | 'verdana' | 'courier';
   fontSize: number;
   lineSpacing: number;
   pageSize: 'letter' | 'a4';
 }
 
 const DEFAULT_SETTINGS: PdfSettings = {
-  fontFamily: 'serif',
+  fontFamily: 'georgia',
   fontSize: 12,
   lineSpacing: 1.5,
   pageSize: 'letter',
@@ -74,8 +74,8 @@ export default function CustomPdfSettingsModal({
             {/* Font Family */}
             <View style={styles.section}>
               <Text style={[styles.sectionLabel, { color: theme.text }]}>Font Family</Text>
-              <View style={styles.optionsRow}>
-                {(['serif', 'sans-serif', 'monospace'] as const).map((font) => (
+              <View style={styles.optionsGrid}>
+                {(['georgia', 'garamond', 'palatino', 'baskerville', 'helvetica', 'verdana', 'courier'] as const).map((font) => (
                   <Pressable
                     key={font}
                     style={[
@@ -92,11 +92,10 @@ export default function CustomPdfSettingsModal({
                         styles.optionText,
                         {
                           color: settings.fontFamily === font ? theme.primaryText : theme.text,
-                          fontFamily: font,
                         },
                       ]}
                     >
-                      {font === 'serif' ? 'Serif' : font === 'sans-serif' ? 'Sans Serif' : 'Mono'}
+                      {font.charAt(0).toUpperCase() + font.slice(1)}
                     </Text>
                   </Pressable>
                 ))}
@@ -257,12 +256,18 @@ const styles = StyleSheet.create({
     gap: 8,
     flexWrap: 'wrap',
   },
+  optionsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
   optionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     borderRadius: 8,
     borderWidth: 1,
-    minWidth: 80,
+    minWidth: '30%',
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },

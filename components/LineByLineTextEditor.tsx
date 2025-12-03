@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Platform,
   Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useTheme } from '../contexts/ThemeContext';
@@ -38,10 +39,7 @@ interface LineByLineTextEditorProps {
   onSave: (pageId: string, editedText: string) => Promise<void>;
 }
 
-const SCREEN_HEIGHT = Dimensions.get('window').height;
-const SCREEN_WIDTH = Dimensions.get('window').width;
 const IS_WEB = Platform.OS === 'web';
-const IS_LARGE_SCREEN = SCREEN_WIDTH > 768; // Tablet/Desktop
 
 export default function LineByLineTextEditor({
   visible,
@@ -50,6 +48,10 @@ export default function LineByLineTextEditor({
   onSave,
 }: LineByLineTextEditorProps) {
   const { theme } = useTheme();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+
+  // Dynamically calculate based on current window size
+  const isLargeScreen = windowWidth > 768;
   const [editedText, setEditedText] = useState('');
   const [saving, setSaving] = useState(false);
   const [fixing, setFixing] = useState(false);
@@ -201,7 +203,7 @@ export default function LineByLineTextEditor({
       setCorrectedText(result.corrected);
 
       // On large screens, show preview modal. On mobile, apply directly
-      if (IS_LARGE_SCREEN) {
+      if (isLargeScreen) {
         setShowCorrectionPreview(true);
       } else {
         // Automatically apply correction on mobile
@@ -272,11 +274,14 @@ export default function LineByLineTextEditor({
           style={styles.content}
           keyboardShouldPersistTaps="handled"
           keyboardDismissMode="on-drag"
-          contentContainerStyle={{ paddingBottom: IS_LARGE_SCREEN ? 0 : 20 }}
+          contentContainerStyle={{ paddingBottom: isLargeScreen ? 0 : 20 }}
         >
-          <View style={IS_LARGE_SCREEN ? styles.twoColumnLayout : styles.singleColumnLayout}>
+          <View style={[
+            isLargeScreen ? styles.twoColumnLayout : styles.singleColumnLayout,
+            isLargeScreen && { minHeight: windowHeight * 0.7 }
+          ]}>
             {/* Photo Section */}
-            <View style={IS_LARGE_SCREEN ? styles.photoSectionWide : styles.photoSection}>
+            <View style={isLargeScreen ? styles.photoSectionWide : styles.photoSection}>
               <View style={styles.photoHeader}>
                 <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
                   Reference Image
@@ -303,8 +308,11 @@ export default function LineByLineTextEditor({
                 </View>
               </View>
               <View style={[
-                IS_LARGE_SCREEN ? styles.photoContainerWide : styles.photoContainer,
-                { borderColor: theme.border }
+                isLargeScreen ? styles.photoContainerWide : styles.photoContainer,
+                {
+                  borderColor: theme.border,
+                  height: isLargeScreen ? windowHeight * 0.6 : windowHeight * 0.15
+                }
               ]}>
                 <GestureDetector gesture={composedGesture}>
                   <Animated.View style={styles.photoWrapper}>
@@ -322,7 +330,7 @@ export default function LineByLineTextEditor({
             </View>
 
             {/* Text Editor Section */}
-            <View style={IS_LARGE_SCREEN ? styles.editorSectionWide : styles.editorSection}>
+            <View style={isLargeScreen ? styles.editorSectionWide : styles.editorSection}>
               <View style={styles.photoHeader}>
                 <Text style={[styles.sectionLabel, { color: theme.textSecondary }]}>
                   Extracted Text
@@ -333,12 +341,14 @@ export default function LineByLineTextEditor({
               </View>
               <TextInput
                 style={[
-                  IS_LARGE_SCREEN ? styles.textInputWide : styles.textInput,
+                  isLargeScreen ? styles.textInputWide : styles.textInput,
                   {
                     color: theme.text,
                     backgroundColor: theme.surface,
                     borderColor: theme.border,
                     paddingBottom: 12,
+                    height: isLargeScreen ? undefined : windowHeight * 0.15,
+                    minHeight: isLargeScreen ? windowHeight * 0.6 : undefined,
                   },
                 ]}
                 value={editedText}
@@ -365,10 +375,10 @@ export default function LineByLineTextEditor({
           <Text style={[styles.footerHint, { color: theme.textTertiary }]}>
             You can manually compare and edit the text or use AI Auto Correct to fix spelling and formatting
           </Text>
-          <View style={IS_LARGE_SCREEN ? styles.buttonContainerWide : styles.buttonContainerMobile}>
+          <View style={isLargeScreen ? styles.buttonContainerWide : styles.buttonContainerMobile}>
             <Pressable
               style={[
-                IS_LARGE_SCREEN ? styles.footerButtonWide : styles.footerButton,
+                isLargeScreen ? styles.footerButtonWide : styles.footerButton,
                 { backgroundColor: theme.secondary, borderColor: theme.border }
               ]}
               onPress={handleCancel}
@@ -378,7 +388,7 @@ export default function LineByLineTextEditor({
 
             <Pressable
               style={[
-                IS_LARGE_SCREEN ? styles.footerButtonWide : styles.footerButton,
+                isLargeScreen ? styles.footerButtonWide : styles.footerButton,
                 {
                   backgroundColor: 'transparent',
                   borderWidth: 2,
@@ -395,7 +405,7 @@ export default function LineByLineTextEditor({
                 <View style={styles.buttonWithIcon}>
                   <Icon name="auto-awesome" size={18} color={theme.primary} />
                   <Text style={[styles.footerButtonText, { color: theme.primary, marginLeft: 6 }]}>
-                    {IS_LARGE_SCREEN ? 'Auto Correct' : 'Fix'}
+                    {isLargeScreen ? 'Auto Correct' : 'Fix'}
                   </Text>
                 </View>
               )}
@@ -403,7 +413,7 @@ export default function LineByLineTextEditor({
 
             <Pressable
               style={[
-                IS_LARGE_SCREEN ? styles.footerButtonWide : styles.footerButton,
+                isLargeScreen ? styles.footerButtonWide : styles.footerButton,
                 styles.saveButton,
                 { backgroundColor: theme.primary }
               ]}
@@ -414,7 +424,7 @@ export default function LineByLineTextEditor({
                 <ActivityIndicator color={theme.primaryText} />
               ) : (
                 <Text style={[styles.footerButtonText, { color: theme.primaryText }]}>
-                  {IS_LARGE_SCREEN ? 'Save Changes' : 'Save'}
+                  {isLargeScreen ? 'Save Changes' : 'Save'}
                 </Text>
               )}
             </Pressable>
@@ -422,7 +432,7 @@ export default function LineByLineTextEditor({
         </View>
 
         {/* Correction Preview Modal - Web only */}
-        {IS_LARGE_SCREEN && showCorrectionPreview && (
+        {isLargeScreen && showCorrectionPreview && (
           <Modal
             visible={showCorrectionPreview}
             transparent={true}
@@ -441,7 +451,7 @@ export default function LineByLineTextEditor({
                 </View>
 
                 <ScrollView style={styles.correctionContent}>
-                  <View style={styles.correctionComparison}>
+                  <View style={[styles.correctionComparison, { flexDirection: isLargeScreen ? 'row' : 'column' }]}>
                     <View style={styles.correctionColumn}>
                       <Text style={[styles.correctionColumnTitle, { color: theme.textSecondary }]}>
                         Original Text
@@ -521,7 +531,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
     gap: 24,
-    minHeight: SCREEN_HEIGHT * 0.7,
     alignItems: 'flex-start',
   },
   singleColumnLayout: {
@@ -562,13 +571,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   photoContainer: {
-    height: SCREEN_HEIGHT * 0.15, // Compact at 15% for mobile to give more room for text input
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
   },
   photoContainerWide: {
-    height: SCREEN_HEIGHT * 0.6, // Taller on web/tablet for better viewing
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
@@ -606,7 +613,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 15,
-    height: SCREEN_HEIGHT * 0.15, // Match photo height on mobile
     lineHeight: 22,
   },
   textInputWide: {
@@ -614,7 +620,6 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 16,
     fontSize: 16,
-    minHeight: SCREEN_HEIGHT * 0.6, // Match photo height
     lineHeight: 24,
   },
   charCount: {
@@ -725,7 +730,6 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   correctionComparison: {
-    flexDirection: IS_LARGE_SCREEN ? 'row' : 'column',
     gap: 16,
   },
   correctionColumn: {
