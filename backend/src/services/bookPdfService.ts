@@ -23,6 +23,7 @@ export interface BookSettings {
   coverTemplate?: 'simple' | 'elegant' | 'modern';
   addPageBreaks?: boolean;
   includeTableOfContents?: boolean;
+  pageBreakStyle?: 'continuous' | 'after-each-page' | 'sections-only';
 }
 
 interface BookPdfOptions {

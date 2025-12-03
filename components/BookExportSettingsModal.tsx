@@ -35,6 +35,7 @@ export interface BookSettings {
   addPageBreaks: boolean;
   includeTableOfContents: boolean;
   includeImages: boolean;
+  pageBreakStyle: 'continuous' | 'after-each-page' | 'sections-only';
 }
 
 const BOOK_SIZES = [
@@ -61,11 +62,12 @@ export default function BookExportSettingsModal({
     author: '',
     fontFamily: 'serif',
     fontSize: 11,
-    includeBackCover: true,
+    includeBackCover: false,
     coverTemplate: 'simple',
     addPageBreaks: true,
     includeTableOfContents: true,
     includeImages: true,
+    pageBreakStyle: 'sections-only',
   });
 
   const updateSetting = <K extends keyof BookSettings>(
@@ -269,78 +271,17 @@ export default function BookExportSettingsModal({
               </View>
             </View>
 
-            {/* Back Cover */}
+            {/* Options */}
             <View style={styles.section}>
-              <Pressable
-                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border }]}
-                onPress={() => updateSetting('includeBackCover', !settings.includeBackCover)}
-              >
-                <View style={styles.toggleLeft}>
-                  <Text style={[styles.toggleLabel, { color: theme.text }]}>Include Back Cover</Text>
-                  <Text style={[styles.toggleDescription, { color: theme.textSecondary }]}>
-                    Add a back cover page with title and description
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.toggle,
-                    {
-                      backgroundColor: settings.includeBackCover ? theme.primary : theme.border,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.toggleThumb,
-                      {
-                        backgroundColor: theme.surface,
-                        transform: [{ translateX: settings.includeBackCover ? 20 : 0 }],
-                      },
-                    ]}
-                  />
-                </View>
-              </Pressable>
-
-              {/* Page Breaks before Sections */}
-              <Pressable
-                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border, marginTop: 12 }]}
-                onPress={() => updateSetting('addPageBreaks', !settings.addPageBreaks)}
-              >
-                <View style={styles.toggleLeft}>
-                  <Text style={[styles.toggleLabel, { color: theme.text }]}>Add page breaks before sections</Text>
-                  <Text style={[styles.toggleDescription, { color: theme.textSecondary }]}>
-                    Start each chapter/section on a new page
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.toggle,
-                    {
-                      backgroundColor: settings.addPageBreaks ? theme.primary : theme.border,
-                    },
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.toggleThumb,
-                      {
-                        backgroundColor: theme.surface,
-                        transform: [{ translateX: settings.addPageBreaks ? 20 : 0 }],
-                      },
-                    ]}
-                  />
-                </View>
-              </Pressable>
-
               {/* Table of Contents */}
               <Pressable
-                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border, marginTop: 12 }]}
+                style={[styles.toggleRow, { backgroundColor: theme.background, borderColor: theme.border }]}
                 onPress={() => updateSetting('includeTableOfContents', !settings.includeTableOfContents)}
               >
                 <View style={styles.toggleLeft}>
                   <Text style={[styles.toggleLabel, { color: theme.text }]}>Include table of contents</Text>
                   <Text style={[styles.toggleDescription, { color: theme.textSecondary }]}>
-                    Add a TOC listing all sections with page numbers
+                    Add a TOC if you have organized sections/chapters
                   </Text>
                 </View>
                 <View
@@ -393,6 +334,54 @@ export default function BookExportSettingsModal({
                   />
                 </View>
               </Pressable>
+            </View>
+
+            {/* Page Break Style */}
+            <View style={styles.section}>
+              <Text style={[styles.sectionLabel, { color: theme.text }]}>Page Break Style</Text>
+              <View style={styles.pageBreakOptions}>
+                {(['continuous', 'after-each-page', 'sections-only'] as const).map((style) => (
+                  <Pressable
+                    key={style}
+                    style={[
+                      styles.pageBreakOption,
+                      {
+                        backgroundColor: settings.pageBreakStyle === style ? theme.primary : theme.background,
+                        borderColor: theme.border,
+                      },
+                    ]}
+                    onPress={() => updateSetting('pageBreakStyle', style)}
+                  >
+                    <View style={styles.pageBreakOptionContent}>
+                      <Text
+                        style={[
+                          styles.pageBreakLabel,
+                          {
+                            color: settings.pageBreakStyle === style ? theme.primaryText : theme.text,
+                          },
+                        ]}
+                      >
+                        {style === 'continuous' ? 'Continuous Flow' :
+                         style === 'after-each-page' ? 'Break After Each Page' :
+                         'Break Between Sections'}
+                      </Text>
+                      <Text
+                        style={[
+                          styles.pageBreakDescription,
+                          {
+                            color: settings.pageBreakStyle === style ? theme.primaryText : theme.textSecondary,
+                            opacity: settings.pageBreakStyle === style ? 0.9 : 1,
+                          },
+                        ]}
+                      >
+                        {style === 'continuous' ? 'All text flows together' :
+                         style === 'after-each-page' ? 'Each page starts on new page (journals/letters)' :
+                         'Start each chapter/section on new page (recipes)'}
+                      </Text>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
             </View>
 
             {/* Info Box */}
@@ -636,5 +625,24 @@ const styles = StyleSheet.create({
   exportButtonText: {
     fontSize: 16,
     fontWeight: '700',
+  },
+  pageBreakOptions: {
+    gap: 12,
+  },
+  pageBreakOption: {
+    padding: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+  },
+  pageBreakOptionContent: {
+    gap: 4,
+  },
+  pageBreakLabel: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  pageBreakDescription: {
+    fontSize: 13,
+    lineHeight: 18,
   },
 });

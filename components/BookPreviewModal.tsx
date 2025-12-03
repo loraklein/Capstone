@@ -25,8 +25,6 @@ export default function BookPreviewModal({
   const { theme } = useTheme();
   const [previewHtml, setPreviewHtml] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
 
   useEffect(() => {
     if (visible) {
@@ -45,32 +43,10 @@ export default function BookPreviewModal({
       );
 
       setPreviewHtml(html);
-      setTotalPages(calculateTotalPages(html));
     } catch (error) {
       console.error('Error generating preview:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const calculateTotalPages = (html: string): number => {
-    // Simple estimation based on content length
-    // In a real implementation, this would be more sophisticated
-    const pageBreaks = (html.match(/page-break-after/g) || []).length;
-    return Math.max(1, pageBreaks + 1);
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-      // Scroll to next page in WebView
-    }
-  };
-
-  const handlePrevPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-      // Scroll to previous page in WebView
     }
   };
 
@@ -157,39 +133,6 @@ export default function BookPreviewModal({
             />
           )}
         </View>
-
-        {/* Page Navigation */}
-        {!isLoading && (
-          <View style={[styles.footer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
-            <Pressable
-              style={[styles.navButton, currentPage === 1 && styles.navButtonDisabled]}
-              onPress={handlePrevPage}
-              disabled={currentPage === 1}
-            >
-              <Icon
-                name="chevron-left"
-                size={24}
-                color={currentPage === 1 ? theme.textTertiary : theme.primary}
-              />
-            </Pressable>
-
-            <Text style={[styles.pageIndicator, { color: theme.text }]}>
-              Page {currentPage} of {totalPages}
-            </Text>
-
-            <Pressable
-              style={[styles.navButton, currentPage === totalPages && styles.navButtonDisabled]}
-              onPress={handleNextPage}
-              disabled={currentPage === totalPages}
-            >
-              <Icon
-                name="chevron-right"
-                size={24}
-                color={currentPage === totalPages ? theme.textTertiary : theme.primary}
-              />
-            </Pressable>
-          </View>
-        )}
       </View>
     </Modal>
   );
@@ -264,22 +207,5 @@ const styles = StyleSheet.create({
   },
   webView: {
     flex: 1,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    borderTopWidth: 1,
-  },
-  navButton: {
-    padding: 8,
-  },
-  navButtonDisabled: {
-    opacity: 0.3,
-  },
-  pageIndicator: {
-    fontSize: 16,
-    fontWeight: '500',
   },
 });

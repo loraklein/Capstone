@@ -223,7 +223,7 @@ const renderPlainText = (text: string): string => {
     .join('\n');
 };
 
-const renderPage = (page: BookExportPage, options: RenderOptions): string => {
+const renderPage = (page: BookExportPage, options: RenderOptions, isLastPage: boolean = false): string => {
   // Use plain text formatting for all PDFs (no smart detection)
   const text = page.finalText
     ? renderPlainText(page.finalText)
@@ -238,18 +238,25 @@ const renderPage = (page: BookExportPage, options: RenderOptions): string => {
       </figure>`
     : '';
 
+  // Determine if we should add a page break after this page
+  const pageBreakStyle = options.bookSettings?.pageBreakStyle || 'sections-only';
+  const shouldBreakAfterPage = pageBreakStyle === 'after-each-page' && !isLastPage;
+  const pageBreakClass = shouldBreakAfterPage ? ' page-break-after' : '';
+
   // For continuous flow (book settings), just return the text
   // For regular PDFs, keep section structure
   if (options.bookSettings || options.customPdfSettings) {
-    // Continuous flow: just paragraphs with optional subtle divider
+    // Continuous flow: just paragraphs with optional page break
     return `
-      ${text}
-      ${image}
+      <div class="page-content${pageBreakClass}">
+        ${text}
+        ${image}
+      </div>
     `;
   } else {
     // Regular PDF: keep sections
     return `
-      <section class="content-page">
+      <section class="content-page${pageBreakClass}">
         <div class="page-body">
           <div class="page-text${image ? '' : ' full-width'}">
             ${text}
@@ -264,16 +271,20 @@ const renderPage = (page: BookExportPage, options: RenderOptions): string => {
 export function renderBookHtml(payload: BookExportPayload, options: RenderOptions = {}): string {
   const includeImages = options.includeImages ?? false;
   const chapters = payload.chapters || [];
-  const addPageBreaks = options.bookSettings?.addPageBreaks ?? false;
+  const pageBreakStyle = options.bookSettings?.pageBreakStyle || 'sections-only';
 
   // Render pages with chapter headings
-  const pagesHtml = payload.pages.map((page) => {
+  const pagesHtml = payload.pages.map((page, index) => {
+    const isLastPage = index === payload.pages.length - 1;
+
     // Check if this page starts a chapter
     const chapter = chapters.find(c => c.start_page_number === page.pageNumber);
     let html = '';
 
     if (chapter) {
-      const pageBreakClass = addPageBreaks ? ' chapter-break' : '';
+      // Add page break before chapter if pageBreakStyle is 'sections-only'
+      const shouldBreakBeforeChapter = pageBreakStyle === 'sections-only';
+      const pageBreakClass = shouldBreakBeforeChapter ? ' chapter-break' : '';
       html += `
         <div class="chapter-heading${pageBreakClass}">
           <h2>${escapeHtml(chapter.title)}</h2>
@@ -282,7 +293,7 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
       `;
     }
 
-    html += renderPage(page, options);
+    html += renderPage(page, options, isLastPage);
     return html;
   }).join('\n');
 
@@ -330,6 +341,12 @@ export function renderBookHtml(payload: BookExportPayload, options: RenderOption
           .page-break {
             page-break-after: always;
             padding: 0 0 2rem 0;
+          }
+          .page-break-after {
+            page-break-after: always;
+          }
+          .page-content {
+            margin-bottom: 1rem;
           }
           .title-page {
             min-height: 100vh;
