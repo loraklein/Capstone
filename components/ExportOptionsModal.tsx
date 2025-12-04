@@ -43,10 +43,15 @@ export default function ExportOptionsModal({
 
   // Generate web URL for this project
   const getProjectWebUrl = () => {
-    // In development, use localhost; in production, use deployed URL
-    const baseUrl = __DEV__
-      ? 'http://localhost:8081'
-      : window.location.origin; // Use current deployment URL
+    // In development, use localhost
+    if (__DEV__) {
+      return `http://localhost:8081/project/${projectId}?name=${encodeURIComponent(projectName)}`;
+    }
+
+    // In production on web, use current domain; on mobile, use deployed URL
+    const baseUrl = IS_WEB
+      ? window.location.origin
+      : 'https://pastforward.ing';
 
     return `${baseUrl}/project/${projectId}?name=${encodeURIComponent(projectName)}`;
   };
