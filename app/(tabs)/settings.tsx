@@ -3,12 +3,10 @@ import Icon from '../../components/Icon';
 import * as Haptics from 'expo-haptics';
 import React, { useState } from 'react';
 import { Alert, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useProjects } from '../../hooks/useProjects';
 import { useAuth } from '../../contexts/AuthContext';
 import { useRouter } from 'expo-router';
-import { apiService } from '@/utils/apiService';
 
 export default function SettingsScreen() {
   const { theme, themeMode, setThemeMode } = useTheme();
@@ -93,40 +91,10 @@ export default function SettingsScreen() {
     );
   };
 
-  // TODO: REMOVE BEFORE DEMO - Temporary function to reset web banner
-  const handleResetBanner = async () => {
-    try {
-      await AsyncStorage.removeItem('webFeaturesBannerDismissed');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      Alert.alert('Success', 'Web features banner has been reset. You will see it again next time you process pages with AI.');
-    } catch (error) {
-      console.log('Error resetting banner:', error);
-      Alert.alert('Error', 'Failed to reset banner.');
-    }
-  };
-
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <View style={styles.section}>
-          <Text style={{ padding: 20, fontSize: 12 }}>
-            Backend: {apiService.getBaseURL()}
-          </Text>
-          {/* TODO: REMOVE BEFORE DEMO - Temporary reset button */}
-          <Pressable
-            style={({ pressed }) => [
-              styles.tempResetButton,
-              {
-                backgroundColor: theme.error,
-                opacity: pressed ? 0.7 : 1,
-              }
-            ]}
-            onPress={handleResetBanner}
-          >
-            <Text style={styles.tempResetButtonText}>
-              🚧 TEMP: Reset Web Banner (REMOVE BEFORE DEMO)
-            </Text>
-          </Pressable>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>Account</Text>
           <View style={[styles.settingItem, { borderBottomColor: theme.divider }]}>
             <View style={styles.settingInfo}>
@@ -337,18 +305,5 @@ const styles = StyleSheet.create({
   themeOptionText: {
     fontSize: 14,
     fontWeight: '500',
-  },
-  // TODO: REMOVE BEFORE DEMO - Temporary styles
-  tempResetButton: {
-    padding: 12,
-    marginHorizontal: 20,
-    marginBottom: 20,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  tempResetButtonText: {
-    color: 'white',
-    fontSize: 12,
-    fontWeight: '600',
   },
 }); 
