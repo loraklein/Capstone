@@ -27,12 +27,11 @@ A cross-platform application for digitizing handwritten documents using AI-power
   - Customizable fonts and typography
   - Table of contents
   - Optional source image inclusion
-- **Preview Before Export**: View formatted output before generating PDF
+- **[EXTRA]Preview Before Export**: View formatted output before generating PDF
 
 ### User Experience
 - **Web & Mobile**: Responsive web app and native iOS/Android support via Expo
 - **Light/Dark Mode**: Automatic theme adaptation based on system preferences
-- **Offline Capable**: Works with local AI models (Ollama) in development
 - **[NEW] Secure Authentication**: User accounts with Supabase Auth
 
 ## Technology Stack
@@ -47,10 +46,10 @@ A cross-platform application for digitizing handwritten documents using AI-power
 - **Node.js** with **Express** API server
 - **PostgreSQL** database via Supabase
 - **[NEW] Supabase Storage** for image hosting
-- **Puppeteer** for PDF generation
+- **[NEW]Puppeteer** for PDF generation
 
 ### AI & OCR
-- **Google Cloud Vision API** for OCR text extraction
+- **[NEW]Google Cloud Vision API** for OCR text extraction
 - **[NEW] OpenAI GPT-4o-mini** for text enhancement (production)
 - **Ollama** for local AI models (development)
 - Support for multiple providers: OpenAI, Ollama
@@ -59,7 +58,7 @@ A cross-platform application for digitizing handwritten documents using AI-power
 
 - **Frontend**: **[NEW] Netlify** with custom domain ([pastforward.ing](https://pastforward.ing))
 - **Backend**: Render ([capstone-backend-og2c.onrender.com](https://capstone-backend-og2c.onrender.com))
-- **Database & Storage**: Supabase
+- **Database & Storage**: **[NEW]Supabase**
 
 ## Getting Started
 
