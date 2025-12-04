@@ -82,7 +82,7 @@ export default function ReviewProgressBar({
               styles.filterButtonText,
               { color: currentFilter === 'all' ? theme.primaryText : theme.text }
             ]}>
-              All ({total})
+              All Pages ({total})
             </Text>
           </Pressable>
 
@@ -96,7 +96,7 @@ export default function ReviewProgressBar({
           >
             <Icon
               name="fiber-manual-record"
-              size={14}
+              size={16}
               color={currentFilter === 'unreviewed' ? 'white' : textTertiary}
             />
             <Text style={[
@@ -117,7 +117,7 @@ export default function ReviewProgressBar({
           >
             <Icon
               name="warning"
-              size={14}
+              size={16}
               color={currentFilter === 'needs_attention' ? 'white' : warningColor}
             />
             <Text style={[
@@ -138,7 +138,7 @@ export default function ReviewProgressBar({
           >
             <Icon
               name="check-circle"
-              size={14}
+              size={16}
               color={currentFilter === 'reviewed' ? 'white' : successColor}
             />
             <Text style={[
@@ -207,14 +207,14 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
     borderWidth: 1,
-    gap: 4,
+    gap: 6,
   },
   filterButtonText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '500',
   },
 });
