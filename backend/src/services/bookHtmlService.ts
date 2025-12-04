@@ -75,10 +75,21 @@ const generateDynamicStyles = (options: RenderOptions): string => {
     .table-of-contents {
       page: toc-page;
     }
-    /* Reset page counter to 0, so first content page is 1 */
+    /* Content pages - reset counter so first content page is 1 */
+    @page content-page {
+      @bottom-center {
+        content: counter(page);
+        font-family: ${fontFamily};
+        font-size: 10pt;
+        color: #5a4c43;
+      }
+    }
     .book-content {
-      counter-reset: page 0;
-      page: auto;
+      page: content-page;
+      counter-reset: page 1;
+    }
+    .book-content > *:first-child {
+      counter-reset: page 1;
     }
   ` : '';
 
@@ -109,11 +120,14 @@ const generateDynamicStyles = (options: RenderOptions): string => {
 const renderTableOfContents = (chapters: any[]): string => {
   if (chapters.length === 0) return '';
 
+  // Add 4 to match actual printed page numbers (cover + blank + TOC + blank = 4 pages)
+  const FRONT_MATTER_OFFSET = 4;
+
   const tocItems = chapters.map(chapter => `
     <div class="toc-item">
       <span class="toc-title">${escapeHtml(chapter.title)}</span>
       <span class="toc-dots"></span>
-      <span class="toc-page">${chapter.start_page_number}</span>
+      <span class="toc-page">${chapter.start_page_number + FRONT_MATTER_OFFSET}</span>
     </div>
   `).join('\n');
 

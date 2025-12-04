@@ -320,10 +320,16 @@ export const exportProjectBookPdf = async (req: Request, res: Response) => {
       bookSettings,
     });
 
+    // Sanitize filename for HTTP header - remove special characters
+    const sanitizedTitle = payload.project.title
+      .replace(/[^a-zA-Z0-9\s-]/g, '') // Remove special chars except spaces and hyphens
+      .replace(/\s+/g, '_') // Replace spaces with underscores
+      .substring(0, 100); // Limit length
+
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="${payload.project.title.replace(/\s+/g, '_')}_book.pdf"`
+      `attachment; filename="${sanitizedTitle}_book.pdf"`
     );
     res.send(pdfBuffer);
   } catch (error) {

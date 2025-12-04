@@ -359,9 +359,8 @@ export default function LineByLineTextEditor({
                 placeholder="Edit the extracted text..."
                 placeholderTextColor={theme.textTertiary}
                 scrollEnabled={true}
-                returnKeyType="done"
-                blurOnSubmit={true}
-                onSubmitEditing={() => Keyboard.dismiss()}
+                returnKeyType="default"
+                blurOnSubmit={false}
               />
               <Text style={[styles.charCount, { color: theme.textTertiary }]}>
                 {editedText.length} characters
