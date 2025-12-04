@@ -286,9 +286,9 @@ const renderPlainText = (text: string): string => {
 };
 
 const renderPage = (page: BookExportPage, options: RenderOptions, isLastPage: boolean = false): string => {
-  // Use plain text formatting for all PDFs (no smart detection)
+  // Use natural formatting to preserve bullets, numbered lists, and section headers
   const text = page.finalText
-    ? renderPlainText(page.finalText)
+    ? parseNaturalFormatting(page.finalText)
     : '<p class="placeholder">No text available for this page.</p>';
 
   const showImages = options.includeImages ?? false;
