@@ -10,31 +10,30 @@ A cross-platform application for digitizing handwritten documents using AI-power
 - **Photo Capture**: High-quality document capture with camera or photo library upload
 - **OCR Text Extraction**: Automatic text recognition from handwritten documents using Google Vision API
 - **Line-by-Line Editing**: Manual text editing with side-by-side original image reference
-- <u>**AI Text Enhancement**</u>: Intelligent correction of OCR errors, spelling, and grammar with project-type awareness (recipes, journals, letters)
-
+- **[EXTRA] AI Text Enhancement**: Intelligent correction of OCR errors, spelling, and grammar with project-type awareness (recipes, journals, letters)
 
 ### Organization & Management
 - **Page Reordering**: Drag-and-drop interface for organizing pages
 - **Image Rotation**: Correct page orientation for better readability
-- <u>**Project Types**</u>: Specialized handling for recipes, journals, letters, and general documents
-- <u>**Chapter Organization**</u>: Group pages into chapters/sections with custom titles
+- **[EXTRA] Project Types**: Specialized handling for recipes, journals, letters, and general documents
+- **[EXTRA] Chapter Organization**: Group pages into chapters/sections with custom titles
 
 ### Export & Publishing
 - **Quick PDF Export**: Generate PDFs from extracted text
 - **Text File Export**: Export all extracted text as a .txt file for easy editing or import into other applications
-- **Create Printable Book**: Professional book formatting with:
+- **[EXTRA] Create Printable Book**: Professional book formatting with:
   - Multiple book sizes (6x9, 8x11, 5.5x8.5)
   - Cover generation
-  - <u>Customizable fonts and typography
+  - Customizable fonts and typography
   - Table of contents
   - Optional source image inclusion
-- **Preview Before Export**</u>: View formatted output before generating PDF
+- **Preview Before Export**: View formatted output before generating PDF
 
 ### User Experience
 - **Web & Mobile**: Responsive web app and native iOS/Android support via Expo
 - **Light/Dark Mode**: Automatic theme adaptation based on system preferences
 - **Offline Capable**: Works with local AI models (Ollama) in development
-- <u>**Secure Authentication**</u>: User accounts with Supabase Auth
+- **[NEW] Secure Authentication**: User accounts with Supabase Auth
 
 ## Technology Stack
 
@@ -47,18 +46,18 @@ A cross-platform application for digitizing handwritten documents using AI-power
 ### Backend
 - **Node.js** with **Express** API server
 - **PostgreSQL** database via Supabase
-- <u>**Supabase Storage**</u> for image hosting
+- **[NEW] Supabase Storage** for image hosting
 - **Puppeteer** for PDF generation
 
 ### AI & OCR
 - **Google Cloud Vision API** for OCR text extraction
-- <u>**OpenAI GPT-4o-mini**</u> for text enhancement (production)
+- **[NEW] OpenAI GPT-4o-mini** for text enhancement (production)
 - **Ollama** for local AI models (development)
 - Support for multiple providers: OpenAI, Ollama
 
 ## Deployment
 
-- **Frontend**: <u>Netlify</u> with custom domain ([pastforward.ing](https://pastforward.ing))
+- **Frontend**: **[NEW] Netlify** with custom domain ([pastforward.ing](https://pastforward.ing))
 - **Backend**: Render ([capstone-backend-og2c.onrender.com](https://capstone-backend-og2c.onrender.com))
 - **Database & Storage**: Supabase
 
@@ -153,4 +152,7 @@ npm run dev
 
 ## License
 
-This project was created as part of an Advanced Web Development capstone. Underlined text throughout represent extra features added beyond original project proposal or new technologies not previously used or experimented with before this capstone.
+This project was created as part of an Advanced Web Development capstone.
+
+**[EXTRA]** features represent additions beyond the original project proposal.
+**[NEW]** technologies indicate tools or platforms not previously used or experimented with before this capstone.
