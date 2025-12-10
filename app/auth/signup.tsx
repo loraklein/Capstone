@@ -15,6 +15,7 @@ import { useRouter, Link } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import Logo from '../../components/Logo';
+import AccessRestrictedModal from '../../components/AccessRestrictedModal';
 
 export default function SignUpScreen() {
   const [email, setEmail] = useState('');
@@ -23,6 +24,7 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showRestrictionModal, setShowRestrictionModal] = useState(false);
   const { signUp } = useAuth();
   const router = useRouter();
   const { theme } = useTheme();
@@ -105,6 +107,11 @@ export default function SignUpScreen() {
   };
 
   const handleSignUp = async () => {
+    // Show restriction modal instead of allowing signup
+    setShowRestrictionModal(true);
+    return;
+
+    // Original signup code (disabled for portfolio mode)
     // Clear any previous errors
     setError('');
     setSuccess(false);
@@ -231,6 +238,11 @@ export default function SignUpScreen() {
           </Link>
         </View>
       </View>
+
+      <AccessRestrictedModal
+        visible={showRestrictionModal}
+        onClose={() => setShowRestrictionModal(false)}
+      />
     </KeyboardAvoidingView>
   );
 }

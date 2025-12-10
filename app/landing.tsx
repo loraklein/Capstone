@@ -12,13 +12,16 @@ import { useRouter } from 'expo-router';
 import { useTheme } from '../contexts/ThemeContext';
 import Logo from '../components/Logo';
 import Icon from '../components/Icon';
+import AccessRestrictedModal from '../components/AccessRestrictedModal';
 
 export default function LandingPage() {
   const { theme } = useTheme();
   const router = useRouter();
+  const [showRestrictionModal, setShowRestrictionModal] = React.useState(false);
 
   const handleGetStarted = () => {
-    router.push('/auth/signup');
+    // Show restriction modal instead of navigating to signup
+    setShowRestrictionModal(true);
   };
 
   const handleSignIn = () => {
@@ -89,13 +92,24 @@ export default function LandingPage() {
   ];
 
   return (
-    <ScrollView
-      style={[styles.container, { backgroundColor: theme.background }]}
-      contentContainerStyle={styles.scrollContent}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Hero Section */}
-      <ImageBackground
+    <>
+      <ScrollView
+        style={[styles.container, { backgroundColor: theme.background }]}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Portfolio Mode Notice Banner */}
+        <View style={[styles.noticeBanner, { backgroundColor: theme.primary + '15', borderBottomColor: theme.primary + '40' }]}>
+          <View style={styles.noticeContent}>
+            <Icon name="info-outline" size={20} color={theme.primary} />
+            <Text style={[styles.noticeText, { color: theme.text }]}>
+              This application is in portfolio mode. Account creation requires special permission.
+            </Text>
+          </View>
+        </View>
+
+        {/* Hero Section */}
+        <ImageBackground
         source={require('../assets/back1.jpg')}
         style={styles.hero}
         resizeMode="cover"
@@ -237,7 +251,13 @@ export default function LandingPage() {
           © 2025 PastForward. Preserve the past, share the future.
         </Text>
       </View>
-    </ScrollView>
+      </ScrollView>
+
+      <AccessRestrictedModal
+        visible={showRestrictionModal}
+        onClose={() => setShowRestrictionModal(false)}
+      />
+    </>
   );
 }
 
@@ -247,6 +267,32 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     alignItems: 'center',
+  },
+  noticeBanner: {
+    width: '100%',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    ...(Platform.OS === 'web' && {
+      position: 'sticky',
+      top: 0,
+      zIndex: 100,
+    }),
+  },
+  noticeContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    maxWidth: 1200,
+    alignSelf: 'center',
+    width: '100%',
+  },
+  noticeText: {
+    fontSize: 14,
+    textAlign: 'center',
+    flex: 1,
+    lineHeight: 20,
   },
   hero: {
     paddingTop: 60,

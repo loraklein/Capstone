@@ -6,7 +6,8 @@ import {
   MdPhotoLibrary, MdPerson, MdLogout, MdChevronRight, MdPalette,
   MdDeleteForever, MdPhoto, MdCameraAlt, MdRotateLeft, MdRotateRight,
   MdDragHandle, MdCheck, MdReorder, MdHourglassEmpty, MdAutoAwesome,
-  MdPictureAsPdf, MdLightMode, MdDarkMode, MdError, MdRadioButtonUnchecked
+  MdPictureAsPdf, MdLightMode, MdDarkMode, MdError, MdRadioButtonUnchecked,
+  MdLock, MdInfo
 } from 'react-icons/md';
 
 interface IconProps {
@@ -55,6 +56,8 @@ export default function Icon({ name, size, color }: IconProps) {
       'dark-mode': MdDarkMode,
       'error': MdError,
       'radio-button-unchecked': MdRadioButtonUnchecked,
+      'lock': MdLock,
+      'info': MdInfo,
     };
     
     const IconComponent = iconMap[name];
